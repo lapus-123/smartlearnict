@@ -1,0 +1,180 @@
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { useFocusEffect } from "@react-navigation/native";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useCallback, useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
+import MaterialViewerScreen from "../screens/MaterialViewerScreen";
+import ReaderScreen from "../screens/ReaderScreen";
+import ReadingHistoryScreen from "../screens/ReadingHistoryScreen";
+import StudentCoursesScreen from "../screens/StudentCoursesScreen";
+import StudentHomeScreen from "../screens/StudentHomeScreen";
+import StudentProfileScreen from "../screens/StudentProfileScreen";
+import StudentUpdatesScreen from "../screens/StudentUpdatesScreen";
+import SubjectMaterialsScreen from "../screens/SubjectMaterialsScreen";
+import { getRecentMaterials } from "../services/api";
+import { hasUnseenUpdates } from "../utils/notifBadge";
+
+const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+const SHARED_SCREENS = (S) => (
+  <>
+    <S.Screen name="SubjectMaterials" component={SubjectMaterialsScreen} />
+    <S.Screen name="MaterialViewer" component={MaterialViewerScreen} />
+    <S.Screen name="Reader" component={ReaderScreen} />
+  </>
+);
+
+function HomeStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="StudentHome" component={StudentHomeScreen} />
+      {SHARED_SCREENS(Stack)}
+    </Stack.Navigator>
+  );
+}
+
+function CoursesStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen
+        name="StudentCoursesList"
+        component={StudentCoursesScreen}
+      />
+      {SHARED_SCREENS(Stack)}
+    </Stack.Navigator>
+  );
+}
+
+function UpdatesStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="StudentUpdates" component={StudentUpdatesScreen} />
+      <Stack.Screen name="MaterialViewer" component={MaterialViewerScreen} />
+      <Stack.Screen name="Reader" component={ReaderScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function ProfileStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="StudentProfile" component={StudentProfileScreen} />
+      <Stack.Screen name="ReadingHistory" component={ReadingHistoryScreen} />
+      <Stack.Screen name="MaterialViewer" component={MaterialViewerScreen} />
+      <Stack.Screen name="Reader" component={ReaderScreen} />
+    </Stack.Navigator>
+  );
+}
+
+const TAB_ICONS = {
+  Home: { icon: "🏠", label: "Home" },
+  Courses: { icon: "📖", label: "Courses" },
+  Updates: { icon: "🔔", label: "Updates" },
+  Profile: { icon: "👤", label: "Profile" },
+};
+
+function CustomTabBar({ state, navigation }) {
+  const [hasBadge, setHasBadge] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      getRecentMaterials()
+        .then((r) => hasUnseenUpdates(r.data.materials))
+        .then(setHasBadge)
+        .catch(() => {});
+    }, []),
+  );
+
+  return (
+    <View style={styles.tabBar}>
+      {state.routes.map((route, index) => {
+        const focused = state.index === index;
+        const tab = TAB_ICONS[route.name];
+        const showBadge = route.name === "Updates" && hasBadge && !focused;
+        return (
+          <TouchableOpacity
+            key={route.key}
+            style={styles.tabItem}
+            onPress={() => {
+              if (route.name === "Updates") setHasBadge(false);
+              if (route.name === "Home")
+                navigation.navigate("Home", { screen: "StudentHome" });
+              else navigation.navigate(route.name);
+            }}
+            activeOpacity={0.7}
+          >
+            <View style={styles.iconWrap}>
+              <Text style={[styles.tabIcon, focused && styles.tabIconActive]}>
+                {tab.icon}
+              </Text>
+              {showBadge && <View style={styles.badge} />}
+            </View>
+            <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
+              {tab.label}
+            </Text>
+            {focused && <View style={styles.tabIndicator} />}
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
+export default function StudentTabNavigator() {
+  return (
+    <Tab.Navigator
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
+      <Tab.Screen name="Home" component={HomeStack} />
+      <Tab.Screen name="Courses" component={CoursesStack} />
+      <Tab.Screen name="Updates" component={UpdatesStack} />
+      <Tab.Screen name="Profile" component={ProfileStack} />
+    </Tab.Navigator>
+  );
+}
+
+const styles = StyleSheet.create({
+  tabBar: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255,255,255,0.95)",
+    elevation: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    paddingBottom: 6,
+    paddingTop: 8,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: "center",
+    position: "relative",
+    paddingBottom: 4,
+  },
+  iconWrap: { position: "relative" },
+  tabIcon: { fontSize: 22, marginBottom: 3, opacity: 0.4 },
+  tabIconActive: { opacity: 1 },
+  badge: {
+    position: "absolute",
+    top: -2,
+    right: -4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#E53935",
+    borderWidth: 1.5,
+    borderColor: "#fff",
+  },
+  tabLabel: { fontSize: 10, fontWeight: "600", color: "#aaa" },
+  tabLabelActive: { color: "#1a3a5c", fontWeight: "800" },
+  tabIndicator: {
+    position: "absolute",
+    bottom: -2,
+    width: 20,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: "#1a3a5c",
+  },
+});
