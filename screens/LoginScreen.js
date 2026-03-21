@@ -108,7 +108,6 @@ export default function LoginScreen({ navigation }) {
                     value={username}
                     onChangeText={setUsername}
                     autoCapitalize="none"
-                    style={{ paddingRight: 40 }}
                   />
                   <Ionicons
                     name="person-outline"
