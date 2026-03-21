@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons"; // Added Icons
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
@@ -23,6 +24,7 @@ export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // New state for visibility
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState({
     visible: false,
@@ -95,7 +97,7 @@ export default function LoginScreen({ navigation }) {
 
             <View style={s.cardHeader}>
               <Text style={s.cardTitle}>Sign In</Text>
-              <View style={s.titleUnderline} />
+              <div style={s.titleUnderline} />
               <Text style={s.cardSub}>Enter your credentials</Text>
             </View>
 
@@ -112,12 +114,25 @@ export default function LoginScreen({ navigation }) {
 
               <View style={s.inputGroup}>
                 <Text style={s.inputLabel}>PASSWORD</Text>
-                <Input
-                  placeholder="Your ID Number"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                />
+                {/* Wrapped Input to position the eye icon */}
+                <View style={s.passwordContainer}>
+                  <Input
+                    placeholder="Your ID Number"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword} // Toggles here
+                  />
+                  <TouchableOpacity
+                    style={s.eyeButton}
+                    onPress={() => setShowPassword(!showPassword)}
+                  >
+                    <Ionicons
+                      name={showPassword ? "eye-off-outline" : "eye-outline"}
+                      size={20}
+                      color="#1a3a5c"
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
 
@@ -167,7 +182,7 @@ const s = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     justifyContent: "center",
-    paddingHorizontal: 45, // Much wider padding to squeeze the card
+    paddingHorizontal: 45,
     paddingVertical: 30,
   },
 
@@ -186,8 +201,8 @@ const s = StyleSheet.create({
     backgroundColor: "#fff",
   },
   logoImg: {
-    width: 140,
-    height: 140,
+    width: 130,
+    height: 130,
     borderRadius: 40,
   },
   tagline: {
@@ -200,15 +215,14 @@ const s = StyleSheet.create({
     opacity: 0.8,
   },
 
-  // The Card - Now strictly width-controlled
   card: {
     backgroundColor: "rgba(255,255,255,0.96)",
     borderRadius: 30,
-    paddingHorizontal: 20, // Tighter internal space
+    paddingHorizontal: 20,
     paddingBottom: 24,
     width: "100%",
-    maxWidth: 340, // Prevents the card from ever being too wide
-    alignSelf: "center", // Keeps it centered when maxWidth hits
+    maxWidth: 320, // Slightly narrower for better aesthetic
+    alignSelf: "center",
     elevation: 15,
     shadowColor: "#000",
     shadowOpacity: 0.15,
@@ -226,7 +240,7 @@ const s = StyleSheet.create({
     borderBottomRightRadius: 10,
     marginBottom: 20,
   },
-  cardHeader: { marginBottom: 18, alignItems: "center" }, // Centered header
+  cardHeader: { marginBottom: 18, alignItems: "center" },
   cardTitle: {
     fontSize: 24,
     fontWeight: "900",
@@ -255,6 +269,20 @@ const s = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 4,
     marginLeft: 2,
+  },
+
+  // Password-specific design
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+  },
+  eyeButton: {
+    position: "absolute",
+    right: 12,
+    height: "100%",
+    justifyContent: "center",
+    paddingLeft: 10,
   },
 
   forgotRow: {
