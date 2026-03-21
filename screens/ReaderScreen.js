@@ -247,26 +247,34 @@ export default function ReaderScreen({ route, navigation }) {
     }
     if (IMAGE_TYPES.includes(ft)) {
       return (
-        <ScrollView
-          style={{ flex: 1, backgroundColor: "#000" }}
-          scrollEventThrottle={100}
-          onScroll={handleImageScroll}
-          showsVerticalScrollIndicator={false}
-        >
-          <Image
-            source={{ uri: optimizeImageUrl(material.fileUrl) }}
-            style={{ width, height: height * 0.85 }}
-            resizeMode="contain"
-            onLoadEnd={() => setLoading(false)}
-          />
-          {loading && (
-            <ActivityIndicator
-              style={styles.loaderAbs}
-              color={COLORS.blue}
-              size="large"
+        <View style={{ flex: 1, backgroundColor: "#000" }}>
+          <ScrollView
+            style={{ flex: 1 }}
+            scrollEventThrottle={100}
+            onScroll={handleImageScroll}
+            showsVerticalScrollIndicator={false}
+            maximumZoomScale={3}
+            minimumZoomScale={1}
+          >
+            <Image
+              source={{ uri: optimizeImageUrl(material.fileUrl) }}
+              style={{ width: dims.width, height: dims.height * 0.85 }}
+              resizeMode="contain"
+              onLoadStart={() => setLoading(true)}
+              onLoadEnd={() => setLoading(false)}
+              onError={() => {
+                setLoading(false);
+                Alert.alert("Error", "Failed to load image. Please try again.");
+              }}
             />
+          </ScrollView>
+          {loading && (
+            <View style={styles.loaderBox}>
+              <ActivityIndicator color={COLORS.blue} size="large" />
+              <Text style={styles.loaderText}>Loading image...</Text>
+            </View>
           )}
-        </ScrollView>
+        </View>
       );
     }
     if (PDF_TYPES.includes(ft)) {
