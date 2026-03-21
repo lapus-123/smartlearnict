@@ -8,7 +8,8 @@
 //
 // Example: export const API_URL = 'http://192.168.1.10:5000/api';
 // ─────────────────────────────────────────────────────────────────
-export const API_URL = "http://172.32.93.102:5000/api";
+
+export const API_URL = "https://smartlearnict-backend.onrender.com/api";
 
 // ─── App Color Palette ────────────────────────────────────────────────────────
 export const COLORS = {
