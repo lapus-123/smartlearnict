@@ -1,5 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createContext, useContext, useEffect, useState } from "react";
+import { API_URL } from "../config";
 import { loginUser, registerUser, setAuthToken } from "../services/api";
 
 const AuthContext = createContext();
@@ -9,6 +10,11 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Wake up backend on app launch
+  useEffect(() => {
+    fetch(API_URL.replace("/api", "/ping")).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const restore = async () => {

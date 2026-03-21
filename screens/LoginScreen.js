@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import Button from "../components/Button";
 import PopupModal from "../components/PopupModal";
+import { API_URL } from "../config";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginScreen({ navigation }) {
@@ -40,6 +41,10 @@ export default function LoginScreen({ navigation }) {
         type: "error",
       });
     setLoading(true);
+    // Wake up Render backend before login (prevents cold start timeout)
+    try {
+      await fetch(API_URL.replace("/api", "/ping"));
+    } catch {}
     const result = await login(username.trim(), password.trim());
     setLoading(false);
     if (!result.success)
