@@ -1,4 +1,4 @@
-import { Ionicons } from "@expo/vector-icons"; // Added Icons
+import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import {
@@ -24,7 +24,7 @@ export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // New state for visibility
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState({
     visible: false,
@@ -91,13 +91,14 @@ export default function LoginScreen({ navigation }) {
             <Text style={s.tagline}>Your Learning Portal</Text>
           </View>
 
-          {/* Compact Designer Card */}
+          {/* Card */}
           <View style={s.card}>
             <View style={s.cardAccent} />
 
             <View style={s.cardHeader}>
               <Text style={s.cardTitle}>Sign In</Text>
-              <div style={s.titleUnderline} />
+              {/* FIX: replaced <div> with <View> */}
+              <View style={s.titleUnderline} />
               <Text style={s.cardSub}>Enter your credentials</Text>
             </View>
 
@@ -114,13 +115,12 @@ export default function LoginScreen({ navigation }) {
 
               <View style={s.inputGroup}>
                 <Text style={s.inputLabel}>PASSWORD</Text>
-                {/* Wrapped Input to position the eye icon */}
                 <View style={s.passwordContainer}>
                   <Input
                     placeholder="Your ID Number"
                     value={password}
                     onChangeText={setPassword}
-                    secureTextEntry={!showPassword} // Toggles here
+                    secureTextEntry={!showPassword}
                   />
                   <TouchableOpacity
                     style={s.eyeButton}
@@ -159,7 +159,7 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          {/* Compact Hint */}
+          {/* Hint */}
           <View style={s.hintPill}>
             <Text style={s.hintText}>💡 Hint: MMDD & ID Number</Text>
           </View>
@@ -185,7 +185,6 @@ const s = StyleSheet.create({
     paddingHorizontal: 45,
     paddingVertical: 30,
   },
-
   logoArea: { alignItems: "center", marginBottom: 25 },
   logoOuterRing: {
     padding: 10,
@@ -200,11 +199,7 @@ const s = StyleSheet.create({
     borderRadius: 40,
     backgroundColor: "#fff",
   },
-  logoImg: {
-    width: 130,
-    height: 130,
-    borderRadius: 40,
-  },
+  logoImg: { width: 130, height: 130, borderRadius: 40 },
   tagline: {
     fontSize: 12,
     fontWeight: "800",
@@ -214,14 +209,13 @@ const s = StyleSheet.create({
     textTransform: "uppercase",
     opacity: 0.8,
   },
-
   card: {
     backgroundColor: "rgba(255,255,255,0.96)",
     borderRadius: 30,
     paddingHorizontal: 20,
     paddingBottom: 24,
     width: "100%",
-    maxWidth: 320, // Slightly narrower for better aesthetic
+    maxWidth: 320,
     alignSelf: "center",
     elevation: 15,
     shadowColor: "#000",
@@ -241,11 +235,7 @@ const s = StyleSheet.create({
     marginBottom: 20,
   },
   cardHeader: { marginBottom: 18, alignItems: "center" },
-  cardTitle: {
-    fontSize: 24,
-    fontWeight: "900",
-    color: "#1a3a5c",
-  },
+  cardTitle: { fontSize: 24, fontWeight: "900", color: "#1a3a5c" },
   titleUnderline: {
     height: 3,
     width: 25,
@@ -254,12 +244,7 @@ const s = StyleSheet.create({
     marginTop: 2,
     marginBottom: 6,
   },
-  cardSub: {
-    fontSize: 12,
-    color: "#6D7993",
-    fontWeight: "600",
-  },
-
+  cardSub: { fontSize: 12, color: "#6D7993", fontWeight: "600" },
   inputContainer: { gap: 2 },
   inputGroup: { marginBottom: 10 },
   inputLabel: {
@@ -270,8 +255,6 @@ const s = StyleSheet.create({
     marginBottom: 4,
     marginLeft: 2,
   },
-
-  // Password-specific design
   passwordContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -284,23 +267,14 @@ const s = StyleSheet.create({
     justifyContent: "center",
     paddingLeft: 10,
   },
-
-  forgotRow: {
-    alignSelf: "flex-end",
-    marginBottom: 12,
-  },
+  forgotRow: { alignSelf: "flex-end", marginBottom: 12 },
   forgotText: {
     color: "#1a3a5c",
     fontSize: 11,
     fontWeight: "700",
     textDecorationLine: "underline",
   },
-
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 14,
-  },
+  divider: { flexDirection: "row", alignItems: "center", marginVertical: 14 },
   divLine: { flex: 1, height: 1, backgroundColor: "#EEE" },
   divText: {
     color: "#CCC",
@@ -308,7 +282,6 @@ const s = StyleSheet.create({
     fontWeight: "900",
     marginHorizontal: 10,
   },
-
   registerBtn: {
     borderWidth: 1.5,
     borderColor: "#1a3a5c",
@@ -316,12 +289,7 @@ const s = StyleSheet.create({
     paddingVertical: 12,
     alignItems: "center",
   },
-  registerTxt: {
-    color: "#1a3a5c",
-    fontWeight: "900",
-    fontSize: 13,
-  },
-
+  registerTxt: { color: "#1a3a5c", fontWeight: "900", fontSize: 13 },
   hintPill: {
     marginTop: 20,
     backgroundColor: "rgba(255,255,255,0.25)",
@@ -330,9 +298,5 @@ const s = StyleSheet.create({
     paddingVertical: 8,
     alignSelf: "center",
   },
-  hintText: {
-    color: "#1a3a5c",
-    fontSize: 11,
-    fontWeight: "700",
-  },
+  hintText: { color: "#1a3a5c", fontSize: 11, fontWeight: "700" },
 });
