@@ -15,7 +15,6 @@ import {
 import Button from "../components/Button";
 import Input from "../components/Input";
 import PopupModal from "../components/PopupModal";
-import { COLORS } from "../config";
 import { useAuth } from "../contexts/AuthContext";
 
 const { width } = Dimensions.get("window");
@@ -76,42 +75,50 @@ export default function LoginScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo area */}
+          {/* Logo Area */}
           <View style={s.logoArea}>
-            <View style={s.logoShadow}>
-              <Image
-                source={require("../assets/logo.png")}
-                style={s.logoImg}
-                resizeMode="contain"
-              />
+            <View style={s.logoOuterRing}>
+              <View style={s.logoShadow}>
+                <Image
+                  source={require("../assets/logo.png")}
+                  style={s.logoImg}
+                  resizeMode="contain"
+                />
+              </View>
             </View>
-            <Text style={s.appName}>SmartLearnICT</Text>
             <Text style={s.tagline}>Your Learning Portal</Text>
           </View>
 
-          {/* Card */}
+          {/* Compact Designer Card */}
           <View style={s.card}>
-            <Text style={s.cardTitle}>Sign In</Text>
-            <Text style={s.cardSub}>Enter your credentials to continue</Text>
+            <View style={s.cardAccent} />
 
-            <View style={s.inputGroup}>
-              <Text style={s.inputLabel}>USERNAME</Text>
-              <Input
-                placeholder="MMDD format (e.g. 0115)"
-                value={username}
-                onChangeText={setUsername}
-                autoCapitalize="none"
-              />
+            <View style={s.cardHeader}>
+              <Text style={s.cardTitle}>Sign In</Text>
+              <View style={s.titleUnderline} />
+              <Text style={s.cardSub}>Enter your credentials</Text>
             </View>
 
-            <View style={s.inputGroup}>
-              <Text style={s.inputLabel}>PASSWORD</Text>
-              <Input
-                placeholder="Your ID Number"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+            <View style={s.inputContainer}>
+              <View style={s.inputGroup}>
+                <Text style={s.inputLabel}>USERNAME</Text>
+                <Input
+                  placeholder="MMDD format"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View style={s.inputGroup}>
+                <Text style={s.inputLabel}>PASSWORD</Text>
+                <Input
+                  placeholder="Your ID Number"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry
+                />
+              </View>
             </View>
 
             <TouchableOpacity
@@ -125,7 +132,7 @@ export default function LoginScreen({ navigation }) {
 
             <View style={s.divider}>
               <View style={s.divLine} />
-              <Text style={s.divText}>or</Text>
+              <Text style={s.divText}>OR</Text>
               <View style={s.divLine} />
             </View>
 
@@ -133,15 +140,13 @@ export default function LoginScreen({ navigation }) {
               style={s.registerBtn}
               onPress={() => navigation.navigate("Register")}
             >
-              <Text style={s.registerTxt}>Create an Account</Text>
+              <Text style={s.registerTxt}>Create Account</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Hint pill */}
+          {/* Compact Hint */}
           <View style={s.hintPill}>
-            <Text style={s.hintText}>
-              💡 Username = MMDD · Password = Your ID Number
-            </Text>
+            <Text style={s.hintText}>💡 Hint: MMDD & ID Number</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -162,95 +167,144 @@ const s = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     justifyContent: "center",
-    paddingHorizontal: 24,
-    paddingVertical: 48,
+    paddingHorizontal: 45, // Much wider padding to squeeze the card
+    paddingVertical: 30,
   },
 
-  // Logo
-  logoArea: { alignItems: "center", marginBottom: 36 },
+  logoArea: { alignItems: "center", marginBottom: 25 },
+  logoOuterRing: {
+    padding: 10,
+    borderRadius: 55,
+    backgroundColor: "rgba(255,255,255,0.25)",
+  },
   logoShadow: {
-    elevation: 10,
+    elevation: 20,
     shadowColor: "#000",
     shadowOpacity: 0.2,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    borderRadius: 35,
-    marginBottom: 14,
+    shadowRadius: 15,
+    borderRadius: 40,
+    backgroundColor: "#fff",
   },
   logoImg: {
-    width: 200,
-    height: 200,
-    backgroundColor: "#ffffff",
-    borderRadius: 35,
+    width: 140,
+    height: 140,
+    borderRadius: 40,
   },
-  appName: {
-    fontSize: 26,
-    fontWeight: "900",
+  tagline: {
+    fontSize: 12,
+    fontWeight: "800",
     color: "#1a3a5c",
-    letterSpacing: 0.5,
+    marginTop: 10,
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    opacity: 0.8,
   },
-  tagline: { fontSize: 13, color: "rgba(26,58,92,0.65)", marginTop: 4 },
 
-  // Card
+  // The Card - Now strictly width-controlled
   card: {
-    backgroundColor: "rgba(255,255,255,0.95)",
-    borderRadius: 28,
-    padding: 28,
-    elevation: 10,
+    backgroundColor: "rgba(255,255,255,0.96)",
+    borderRadius: 30,
+    paddingHorizontal: 20, // Tighter internal space
+    paddingBottom: 24,
+    width: "100%",
+    maxWidth: 340, // Prevents the card from ever being too wide
+    alignSelf: "center", // Keeps it centered when maxWidth hits
+    elevation: 15,
     shadowColor: "#000",
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.15,
     shadowRadius: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.8)",
+    overflow: "hidden",
   },
+  cardAccent: {
+    height: 4,
+    width: "30%",
+    backgroundColor: "#4D8FD9",
+    alignSelf: "center",
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    marginBottom: 20,
+  },
+  cardHeader: { marginBottom: 18, alignItems: "center" }, // Centered header
   cardTitle: {
     fontSize: 24,
     fontWeight: "900",
     color: "#1a3a5c",
-    marginBottom: 4,
   },
-  cardSub: { fontSize: 13, color: "#999", marginBottom: 24 },
+  titleUnderline: {
+    height: 3,
+    width: 25,
+    backgroundColor: "#4DD9C0",
+    borderRadius: 2,
+    marginTop: 2,
+    marginBottom: 6,
+  },
+  cardSub: {
+    fontSize: 12,
+    color: "#6D7993",
+    fontWeight: "600",
+  },
 
-  inputGroup: { marginBottom: 4 },
+  inputContainer: { gap: 2 },
+  inputGroup: { marginBottom: 10 },
   inputLabel: {
     fontSize: 10,
-    fontWeight: "800",
-    color: "#1a3a5c",
+    fontWeight: "900",
+    color: "#4D8FD9",
     letterSpacing: 1,
     marginBottom: 4,
+    marginLeft: 2,
   },
 
-  forgotRow: { alignItems: "flex-end", marginBottom: 16, marginTop: 4 },
-  forgotText: { color: COLORS.blue, fontSize: 13, fontWeight: "700" },
+  forgotRow: {
+    alignSelf: "flex-end",
+    marginBottom: 12,
+  },
+  forgotText: {
+    color: "#1a3a5c",
+    fontSize: 11,
+    fontWeight: "700",
+    textDecorationLine: "underline",
+  },
 
   divider: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    marginVertical: 16,
+    marginVertical: 14,
   },
-  divLine: { flex: 1, height: 1, backgroundColor: "#EAEEF8" },
-  divText: { color: "#bbb", fontSize: 12, fontWeight: "600" },
+  divLine: { flex: 1, height: 1, backgroundColor: "#EEE" },
+  divText: {
+    color: "#CCC",
+    fontSize: 10,
+    fontWeight: "900",
+    marginHorizontal: 10,
+  },
 
   registerBtn: {
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: "#1a3a5c",
-    borderRadius: 14,
-    paddingVertical: 14,
+    borderRadius: 15,
+    paddingVertical: 12,
     alignItems: "center",
   },
-  registerTxt: { color: "#1a3a5c", fontWeight: "800", fontSize: 15 },
+  registerTxt: {
+    color: "#1a3a5c",
+    fontWeight: "900",
+    fontSize: 13,
+  },
 
   hintPill: {
     marginTop: 20,
-    backgroundColor: "rgba(255,255,255,0.4)",
-    borderRadius: 30,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     alignSelf: "center",
   },
   hintText: {
     color: "#1a3a5c",
-    fontSize: 12,
-    fontWeight: "600",
-    textAlign: "center",
+    fontSize: 11,
+    fontWeight: "700",
   },
 });
