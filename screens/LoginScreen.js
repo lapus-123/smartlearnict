@@ -9,11 +9,11 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
 import Button from "../components/Button";
-import Input from "../components/Input";
 import PopupModal from "../components/PopupModal";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -23,6 +23,7 @@ export default function LoginScreen({ navigation }) {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState(null);
   const [popup, setPopup] = useState({
     visible: false,
     title: "",
@@ -74,7 +75,7 @@ export default function LoginScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo Area */}
+          {/* Logo — untouched */}
           <View style={s.logoArea}>
             <View style={s.logoOuterRing}>
               <View style={s.logoShadow}>
@@ -85,63 +86,81 @@ export default function LoginScreen({ navigation }) {
                 />
               </View>
             </View>
-            <Text style={s.tagline}>Your Learning Portal</Text>
+            <Text style={s.tagline}>YOUR LEARNING PORTAL</Text>
           </View>
 
-          {/* Designer Card */}
+          {/* Card */}
           <View style={s.card}>
-            <View style={s.cardAccent} />
+            {/* Header */}
+            <Text style={s.cardTitle}>Sign In</Text>
+            <View style={s.titleBar} />
+            <Text style={s.cardSub}>Welcome back, learner!</Text>
 
-            <View style={s.cardHeader}>
-              <Text style={s.cardTitle}>Sign In</Text>
-              <View style={s.titleUnderline} />
-              <Text style={s.cardSub}>Welcome back, learner!</Text>
+            {/* Username */}
+            <View style={s.fieldWrap}>
+              <View
+                style={[
+                  s.fieldBox,
+                  focusedField === "username" && s.fieldBoxFocused,
+                ]}
+              >
+                <Ionicons
+                  name="person-outline"
+                  size={18}
+                  color={focusedField === "username" ? "#4D8FD9" : "#aab"}
+                  style={s.fieldIcon}
+                />
+                <TextInput
+                  style={s.fieldInput}
+                  placeholder="Username (MMDD format)"
+                  placeholderTextColor="#BBC"
+                  value={username}
+                  onChangeText={setUsername}
+                  autoCapitalize="none"
+                  onFocus={() => setFocusedField("username")}
+                  onBlur={() => setFocusedField(null)}
+                />
+              </View>
             </View>
 
-            <View style={s.inputContainer}>
-              {/* Username Input */}
-              <View style={s.inputGroup}>
-                <Text style={s.inputLabel}>USERNAME</Text>
-                <View style={s.iconInputWrapper}>
-                  <Input
-                    placeholder="MMDD format"
-                    value={username}
-                    onChangeText={setUsername}
-                    autoCapitalize="none"
-                  />
+            {/* Password */}
+            <View style={s.fieldWrap}>
+              <View
+                style={[
+                  s.fieldBox,
+                  focusedField === "password" && s.fieldBoxFocused,
+                ]}
+              >
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={18}
+                  color={focusedField === "password" ? "#4D8FD9" : "#aab"}
+                  style={s.fieldIcon}
+                />
+                <TextInput
+                  style={s.fieldInput}
+                  placeholder="Password (Your ID Number)"
+                  placeholderTextColor="#BBC"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                  onFocus={() => setFocusedField("password")}
+                  onBlur={() => setFocusedField(null)}
+                />
+                <TouchableOpacity
+                  onPress={() => setShowPassword(!showPassword)}
+                  style={s.eyeBtn}
+                >
                   <Ionicons
-                    name="person-outline"
-                    size={18}
-                    color="#4D8FD9"
-                    style={s.inputIcon}
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={20}
+                    color={showPassword ? "#4D8FD9" : "#aab"}
                   />
-                </View>
-              </View>
-
-              {/* Password Input */}
-              <View style={s.inputGroup}>
-                <Text style={s.inputLabel}>PASSWORD</Text>
-                <View style={s.iconInputWrapper}>
-                  <Input
-                    placeholder="Your ID Number"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry={!showPassword}
-                  />
-                  <TouchableOpacity
-                    style={s.eyeButton}
-                    onPress={() => setShowPassword(!showPassword)}
-                  >
-                    <Ionicons
-                      name={showPassword ? "eye-off-outline" : "eye-outline"}
-                      size={20}
-                      color={showPassword ? "#4D8FD9" : "#1a3a5c"}
-                    />
-                  </TouchableOpacity>
-                </View>
+                </TouchableOpacity>
               </View>
             </View>
 
+            {/* Forgot */}
             <TouchableOpacity
               onPress={() => navigation.navigate("ForgotPassword")}
               style={s.forgotRow}
@@ -149,18 +168,19 @@ export default function LoginScreen({ navigation }) {
               <Text style={s.forgotText}>Forgot Password?</Text>
             </TouchableOpacity>
 
-            <View style={s.buttonShadow}>
-              <Button title="Login" onPress={handleLogin} loading={loading} />
-            </View>
+            {/* Login button */}
+            <Button title="Login" onPress={handleLogin} loading={loading} />
 
+            {/* Divider */}
             <View style={s.divider}>
               <View style={s.divLine} />
-              <View style={s.orCircle}>
-                <Text style={s.divText}>OR</Text>
+              <View style={s.orPill}>
+                <Text style={s.orText}>OR</Text>
               </View>
               <View style={s.divLine} />
             </View>
 
+            {/* Register */}
             <TouchableOpacity
               style={s.registerBtn}
               onPress={() => navigation.navigate("Register")}
@@ -169,9 +189,11 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
           </View>
 
-          {/* Compact Hint */}
+          {/* Hint */}
           <View style={s.hintPill}>
-            <Text style={s.hintText}>💡 Username: MMDD • Password: ID</Text>
+            <Text style={s.hintText}>
+              💡 Username: MMDD • Password: Your ID
+            </Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -192,12 +214,12 @@ const s = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     justifyContent: "center",
-    paddingHorizontal: 40,
-    paddingVertical: 30,
+    paddingHorizontal: 24,
+    paddingVertical: 36,
   },
 
-  // Logo Area - More contrast
-  logoArea: { alignItems: "center", marginBottom: 20 },
+  // Logo — unchanged
+  logoArea: { alignItems: "center", marginBottom: 24 },
   logoOuterRing: {
     padding: 8,
     borderRadius: 50,
@@ -223,127 +245,94 @@ const s = StyleSheet.create({
     textTransform: "uppercase",
   },
 
-  // The Card - Advanced Glassmorphism
+  // Card
   card: {
-    backgroundColor: "rgba(255,255,255,0.96)",
-    borderRadius: 32,
-    paddingHorizontal: 22,
-    paddingBottom: 24,
-    width: "100%",
-    maxWidth: 325,
-    alignSelf: "center",
-    elevation: 20,
+    backgroundColor: "#fff",
+    borderRadius: 28,
+    padding: 28,
+    elevation: 16,
     shadowColor: "#1a3a5c",
-    shadowOpacity: 0.15,
-    shadowRadius: 25,
-    borderWidth: 1.5,
-    borderColor: "rgba(255,255,255,0.7)",
-    overflow: "hidden",
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 8 },
   },
-  cardAccent: {
-    height: 4,
-    width: "25%",
-    backgroundColor: "#4D8FD9",
-    alignSelf: "center",
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
-    marginBottom: 20,
-  },
-  cardHeader: { marginBottom: 16, alignItems: "center" },
   cardTitle: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: "900",
     color: "#1a3a5c",
-    letterSpacing: -0.5,
+    textAlign: "center",
   },
-  titleUnderline: {
-    height: 3,
-    width: 30,
+  titleBar: {
+    width: 40,
+    height: 4,
     backgroundColor: "#4DD9C0",
-    borderRadius: 10,
-    marginTop: 4,
-    marginBottom: 6,
+    borderRadius: 4,
+    alignSelf: "center",
+    marginTop: 6,
+    marginBottom: 8,
   },
-  cardSub: { fontSize: 13, color: "#6D7993", fontWeight: "600", opacity: 0.8 },
-
-  inputContainer: { gap: 4 },
-  inputGroup: { marginBottom: 12 },
-  inputLabel: {
-    fontSize: 10,
-    fontWeight: "900",
-    color: "#4D8FD9",
-    letterSpacing: 1.2,
-    marginBottom: 6,
-    marginLeft: 4,
+  cardSub: {
+    fontSize: 14,
+    color: "#8896A8",
+    textAlign: "center",
+    marginBottom: 28,
   },
 
-  // Symmetrical Icon Inputs
-  iconInputWrapper: {
+  // Fields
+  fieldWrap: { marginBottom: 16 },
+  fieldBox: {
     flexDirection: "row",
     alignItems: "center",
-    width: "100%",
+    backgroundColor: "#F4F7FF",
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: "#E8EEFF",
+    paddingHorizontal: 14,
+    height: 54,
   },
-  inputIcon: {
-    position: "absolute",
-    right: 14,
-    opacity: 0.6,
-  },
-  eyeButton: {
-    position: "absolute",
-    right: 12,
-    height: "100%",
-    paddingHorizontal: 4,
-    justifyContent: "center",
-  },
+  fieldBoxFocused: { borderColor: "#4D8FD9", backgroundColor: "#EFF5FF" },
+  fieldIcon: { marginRight: 10 },
+  fieldInput: { flex: 1, fontSize: 15, color: "#1a3a5c", fontWeight: "500" },
+  eyeBtn: { padding: 6 },
 
-  forgotRow: { alignSelf: "flex-end", marginBottom: 14, paddingRight: 4 },
-  forgotText: {
-    color: "#1a3a5c",
-    fontSize: 11,
-    fontWeight: "800",
-    textDecorationLine: "underline",
-    opacity: 0.8,
-  },
+  // Forgot
+  forgotRow: { alignSelf: "flex-end", marginBottom: 20, marginTop: -4 },
+  forgotText: { color: "#4D8FD9", fontSize: 13, fontWeight: "700" },
 
-  // Button Shadow for primary action
-  buttonShadow: {
-    shadowColor: "#4D8FD9",
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-  },
-
-  divider: { flexDirection: "row", alignItems: "center", marginVertical: 18 },
-  divLine: { flex: 1, height: 1.2, backgroundColor: "#EEF2F6" },
-  orCircle: {
+  // Divider
+  divider: { flexDirection: "row", alignItems: "center", marginVertical: 20 },
+  divLine: { flex: 1, height: 1, backgroundColor: "#EEF2F8" },
+  orPill: {
     marginHorizontal: 12,
-    padding: 6,
+    backgroundColor: "#F4F7FF",
     borderRadius: 20,
-    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderWidth: 1,
-    borderColor: "#EEF2F6",
+    borderColor: "#E8EEFF",
   },
-  divText: { color: "#94A3B8", fontSize: 10, fontWeight: "900" },
+  orText: { color: "#8896A8", fontSize: 11, fontWeight: "900" },
 
+  // Register
   registerBtn: {
-    borderWidth: 1.8,
+    borderWidth: 2,
     borderColor: "#1a3a5c",
     borderRadius: 16,
-    paddingVertical: 13,
+    paddingVertical: 14,
     alignItems: "center",
-    backgroundColor: "transparent",
   },
-  registerTxt: { color: "#1a3a5c", fontWeight: "900", fontSize: 14 },
+  registerTxt: { color: "#1a3a5c", fontWeight: "900", fontSize: 15 },
 
+  // Hint
   hintPill: {
-    marginTop: 22,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 25,
-    paddingHorizontal: 18,
+    marginTop: 24,
+    backgroundColor: "rgba(255,255,255,0.25)",
+    borderRadius: 30,
+    paddingHorizontal: 20,
     paddingVertical: 10,
     alignSelf: "center",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.15)",
+    borderColor: "rgba(255,255,255,0.2)",
   },
-  hintText: { color: "#1a3a5c", fontSize: 11, fontWeight: "800", opacity: 0.9 },
+  hintText: { color: "#1a3a5c", fontSize: 12, fontWeight: "800" },
 });
