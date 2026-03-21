@@ -6,10 +6,10 @@
 //   macOS / Linux : run `ifconfig` → look for en0 inet (e.g. 192.168.1.10)
 //   Windows       : run `ipconfig` → look for IPv4 Address
 //
-// Example: export const API_URL = 'http://192.168.1.10:5000/api';
+//
 // ─────────────────────────────────────────────────────────────────
 
-export const API_URL = "https://smartlearnict-backend.onrender.com/api";
+export const API_URL = "https://smartlearnict-backend1.onrender.com/api";
 
 // ─── App Color Palette ────────────────────────────────────────────────────────
 export const COLORS = {
