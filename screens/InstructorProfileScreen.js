@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Svg, { Circle, Path } from "react-native-svg";
 import AvatarPicker from "../components/AvatarPicker";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -35,7 +36,22 @@ export default function InstructorProfileScreen({ navigation }) {
           <AvatarPicker size={90} />
           <Text style={s.name}>{currentUser?.fullName}</Text>
           <View style={s.badge}>
-            <Text style={s.badgeText}>📚 Instructor</Text>
+            <Svg
+              width={14}
+              height={14}
+              viewBox="0 0 24 24"
+              fill="none"
+              style={{ marginRight: 4 }}
+            >
+              <Path
+                d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"
+                stroke="#1a3a5c"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+            <Text style={s.badgeText}>Instructor</Text>
           </View>
         </View>
 
@@ -54,16 +70,45 @@ export default function InstructorProfileScreen({ navigation }) {
           style={s.logBtn}
           onPress={() => navigation.navigate("ReadingHistory")}
         >
-          <Text style={s.logIcon}>📚</Text>
-          <View>
-            <Text style={s.logTitle}>Reading Log</Text>
+          <View style={s.svgWrap}>
+            <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M12 8v4l3 3"
+                stroke="#1a3a5c"
+                strokeWidth={2}
+                strokeLinecap="round"
+              />
+              <Circle cx={12} cy={12} r={9} stroke="#1a3a5c" strokeWidth={2} />
+            </Svg>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.logTitle}>History Log</Text>
             <Text style={s.logSub}>View your learning history & progress</Text>
           </View>
-          <Text style={s.logArrow}>›</Text>
+          <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+            <Path
+              d="M9 18l6-6-6-6"
+              stroke="#aaa"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </Svg>
         </TouchableOpacity>
 
         <TouchableOpacity style={s.logoutBtn} onPress={logout}>
-          <Text style={s.logoutText}>Logout</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                stroke="#C62828"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+            <Text style={s.logoutText}>Logout</Text>
+          </View>
         </TouchableOpacity>
       </ScrollView>
     </LinearGradient>
@@ -91,6 +136,8 @@ const s = StyleSheet.create({
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 6,
+    flexDirection: "row",
+    alignItems: "center",
   },
   badgeText: { color: "#1a3a5c", fontWeight: "700", fontSize: 13 },
   card: {
@@ -125,7 +172,14 @@ const s = StyleSheet.create({
     marginBottom: 12,
     elevation: 2,
   },
-  logIcon: { fontSize: 26 },
+  svgWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(26,58,92,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   logTitle: { fontSize: 15, fontWeight: "800", color: "#1a3a5c" },
   logSub: { fontSize: 12, color: "#666", marginTop: 2 },
   logArrow: { fontSize: 22, color: "#aaa", marginLeft: "auto" },
