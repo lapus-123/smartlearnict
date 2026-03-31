@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { BellIcon, CoursesIcon, SearchIcon } from "../components/Icons";
 import { useAuth } from "../contexts/AuthContext";
 import { getRecentMaterials, getSubjects } from "../services/api";
 import { hasUnseenUpdates, markUpdatesAsSeen } from "../utils/notifBadge";
@@ -129,7 +130,7 @@ export default function StudentHomeScreen({ navigation }) {
               style={styles.iconBtn}
               onPress={() => navigation.navigate("Courses")}
             >
-              <Text style={styles.iconBtnText}>🔍</Text>
+              <SearchIcon size={18} color="#1a3a5c" />
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.iconBtn}
@@ -139,7 +140,7 @@ export default function StudentHomeScreen({ navigation }) {
                 navigation.navigate("Updates");
               }}
             >
-              <Text style={styles.iconBtnText}>🔔</Text>
+              <BellIcon size={18} color="#1a3a5c" />
               {hasBadge && <View style={styles.iconBadge} />}
             </TouchableOpacity>
           </View>
@@ -187,9 +188,9 @@ export default function StudentHomeScreen({ navigation }) {
         {/* Core ICT Majors */}
         <View style={styles.sectionHeader}>
           <View style={styles.sectionLeft}>
-            <Text style={styles.sectionIcon}>⊞</Text>
+            <Text style={styles.sectionIcon}>◈</Text>
             <View>
-              <Text style={styles.sectionTitle}>MAJOR SUBJECTS</Text>
+              <Text style={styles.sectionTitle}>CORE ICT MAJORS</Text>
               <Text style={styles.sectionSub}>Primary Curriculum</Text>
             </View>
           </View>
@@ -230,7 +231,7 @@ export default function StudentHomeScreen({ navigation }) {
                     { backgroundColor: ICON_COLORS[i % ICON_COLORS.length] },
                   ]}
                 >
-                  <Text style={styles.coreIconText}>{getIcon(s.name)}</Text>
+                  <CoursesIcon size={26} color="#fff" />
                 </View>
                 <Text style={styles.coreCardLabel}>MAJOR SUBJECT</Text>
                 <Text style={styles.coreCardName}>{s.name}</Text>
@@ -242,14 +243,44 @@ export default function StudentHomeScreen({ navigation }) {
           </ScrollView>
         )}
 
-        {/* Supporting Courses (Specialization) */}
+        {/* When no specializations — show core subjects as vertical list too */}
+        {!loading && specSubjects.length === 0 && coreSubjects.length > 0 && (
+          <View style={styles.specList}>
+            {coreSubjects.map((s, i) => (
+              <TouchableOpacity
+                key={s._id + "_v"}
+                style={styles.specRow}
+                onPress={() =>
+                  navigation.navigate("SubjectMaterials", { subject: s })
+                }
+                activeOpacity={0.85}
+              >
+                <View
+                  style={[
+                    styles.specIcon,
+                    { backgroundColor: ICON_COLORS[i % ICON_COLORS.length] },
+                  ]}
+                >
+                  <CoursesIcon size={22} color="#fff" />
+                </View>
+                <View style={styles.specInfo}>
+                  <Text style={styles.specName}>{s.name}</Text>
+                  <Text style={styles.specLabel}>MAJOR SUBJECT</Text>
+                </View>
+                <Text style={styles.specArrow}>›</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Supporting Courses (Specialization) — hidden when empty, core expands */}
         {!loading && specSubjects.length > 0 && (
           <>
             <View style={[styles.sectionHeader, { marginTop: 8 }]}>
               <View style={styles.sectionLeft}>
-                <Text style={styles.sectionIcon}>👥</Text>
+                <Text style={styles.sectionIcon}>◉</Text>
                 <View>
-                  <Text style={styles.sectionTitle}>SPECIALIZE COURSES</Text>
+                  <Text style={styles.sectionTitle}>SUPPORTING COURSES</Text>
                   <Text style={styles.sectionSub}>Specialized Modules</Text>
                 </View>
               </View>
@@ -283,7 +314,7 @@ export default function StudentHomeScreen({ navigation }) {
                       },
                     ]}
                   >
-                    <Text style={styles.specIconText}>{getIcon(s.name)}</Text>
+                    <CoursesIcon size={22} color="#fff" />
                   </View>
                   <View style={styles.specInfo}>
                     <Text style={styles.specName}>{s.name}</Text>

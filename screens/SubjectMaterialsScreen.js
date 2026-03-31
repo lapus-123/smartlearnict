@@ -11,33 +11,6 @@ import {
 import { COLORS } from "../config";
 import { getMaterials } from "../services/api";
 
-const FILE_ICON = {
-  pdf: "📄",
-  docx: "📝",
-  doc: "📝",
-  ppt: "📊",
-  pptx: "📊",
-  mp4: "🎬",
-  mov: "🎬",
-  webm: "🎬",
-  jpg: "🖼️",
-  jpeg: "🖼️",
-  png: "🖼️",
-};
-const FILE_COLOR = {
-  pdf: "#E53935",
-  docx: "#1976D2",
-  doc: "#1976D2",
-  ppt: "#E65100",
-  pptx: "#E65100",
-  mp4: "#7B2FBE",
-  mov: "#7B2FBE",
-  webm: "#7B2FBE",
-  jpg: "#2d9e5f",
-  jpeg: "#2d9e5f",
-  png: "#2d9e5f",
-};
-
 export default function SubjectMaterialsScreen({ route, navigation }) {
   const { subject } = route.params;
   const [materials, setMaterials] = useState([]);

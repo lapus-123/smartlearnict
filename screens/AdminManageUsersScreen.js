@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import Button from "../components/Button";
 import Dropdown from "../components/Dropdown";
+import { DeleteIcon, EditIcon, SearchIcon } from "../components/Icons";
 import Input from "../components/Input";
 import PopupModal from "../components/PopupModal";
 import { COLORS } from "../config";
@@ -255,7 +256,7 @@ export default function AdminManageUsersScreen({ navigation }) {
 
       {searched && !loading && users.length > 0 && (
         <View style={s.searchBar}>
-          <Text style={s.searchIcon}>🔍</Text>
+          <SearchIcon size={15} color="#aaa" />
           <TextInput
             style={s.searchInput}
             placeholder="Search by name, username or ID..."
@@ -319,10 +320,16 @@ export default function AdminManageUsersScreen({ navigation }) {
           style={s.editBtn}
           onPress={() => navigation.navigate("AdminEditUser", { user: u })}
         >
-          <Text style={s.editTxt}>✏️ Edit</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <EditIcon size={16} color="#1736F5" />
+            <Text style={s.editTxt}>Edit</Text>
+          </View>
         </TouchableOpacity>
         <TouchableOpacity style={s.deleteBtn} onPress={() => handleDelete(u)}>
-          <Text style={s.deleteTxt}>🗑️ Delete</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <DeleteIcon size={16} color="#E53935" />
+            <Text style={s.deleteTxt}>Delete</Text>
+          </View>
         </TouchableOpacity>
       </View>
     </View>

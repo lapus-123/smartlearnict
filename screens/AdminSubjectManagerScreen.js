@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,19 +13,24 @@ import Button from "../components/Button";
 import Input from "../components/Input";
 import PopupModal from "../components/PopupModal";
 import { COLORS } from "../config";
-import { createSubject, getSubjects, updateSubject } from "../services/api";
+import {
+  createSubject,
+  deleteSubject,
+  getSubjects,
+  updateSubject,
+} from "../services/api";
 
 const TYPE_OPTIONS = [
-  { label: "🎓 Core Major", value: "core" },
-  { label: "📌 Specialization", value: "specialization" },
+  { label: "Core Major", value: "core" },
+  { label: "Specialization", value: "specialization" },
 ];
 
 function TabBar({ active, onChange }) {
   return (
     <View style={s.tabBar}>
       {[
-        { key: "add", label: "➕  Add Subject" },
-        { key: "list", label: "📋  Subject List" },
+        { key: "add", label: "Add Subject" },
+        { key: "list", label: "Subject List" },
       ].map((t) => (
         <TouchableOpacity
           key={t.key}
@@ -104,6 +110,37 @@ export default function AdminSubjectManagerScreen({ navigation }) {
     setSavingId(null);
   };
 
+  const handleDelete = (sub) => {
+    Alert.alert(
+      "Delete Subject",
+      `Delete "${sub.name}"? This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteSubject(sub._id);
+              load();
+              showPopup(
+                "Deleted",
+                `"${sub.name}" has been deleted.`,
+                "success",
+              );
+            } catch (err) {
+              showPopup(
+                "Error",
+                err.response?.data?.message || "Failed to delete.",
+                "error",
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const showPopup = (title, message, type) =>
     setPopup({ visible: true, title, message, type });
 
@@ -170,9 +207,7 @@ export default function AdminSubjectManagerScreen({ navigation }) {
           ) : (
             <>
               {core.length > 0 && (
-                <Text style={s.sectionLabel}>
-                  🎓 Core Majors ({core.length})
-                </Text>
+                <Text style={s.sectionLabel}>Core Majors ({core.length})</Text>
               )}
               {core.map((sub) => (
                 <SubjectRow
@@ -186,11 +221,12 @@ export default function AdminSubjectManagerScreen({ navigation }) {
                   setEditName={setEditName}
                   setEditType={setEditType}
                   handleSave={handleSave}
+                  handleDelete={handleDelete}
                 />
               ))}
               {spec.length > 0 && (
                 <Text style={[s.sectionLabel, { marginTop: 14 }]}>
-                  📌 Specializations ({spec.length})
+                  Specializations ({spec.length})
                 </Text>
               )}
               {spec.map((sub) => (
@@ -205,6 +241,7 @@ export default function AdminSubjectManagerScreen({ navigation }) {
                   setEditName={setEditName}
                   setEditType={setEditType}
                   handleSave={handleSave}
+                  handleDelete={handleDelete}
                 />
               ))}
             </>
@@ -233,6 +270,7 @@ function SubjectRow({
   setEditName,
   setEditType,
   handleSave,
+  handleDelete,
 }) {
   if (editingId === s._id) {
     return (
@@ -291,16 +329,24 @@ function SubjectRow({
             Added {new Date(s.createdAt).toLocaleDateString()}
           </Text>
         </View>
-        <TouchableOpacity
-          style={s2.editBtn}
-          onPress={() => {
-            setEditingId(s._id);
-            setEditName(s.name);
-            setEditType(s.type);
-          }}
-        >
-          <Text style={s2.editBtnText}>Edit</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: "row", gap: 8 }}>
+          <TouchableOpacity
+            style={s2.editBtn}
+            onPress={() => {
+              setEditingId(s._id);
+              setEditName(s.name);
+              setEditType(s.type);
+            }}
+          >
+            <Text style={s2.editBtnText}>Edit</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={s2.deleteBtn}
+            onPress={() => handleDelete(s)}
+          >
+            <Text style={s2.deleteBtnText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -394,6 +440,13 @@ const s2 = StyleSheet.create({
     paddingVertical: 6,
   },
   editBtnText: { color: COLORS.blue, fontWeight: "700", fontSize: 13 },
+  deleteBtn: {
+    backgroundColor: "#FFE5E5",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  deleteBtnText: { color: "#E53935", fontWeight: "700", fontSize: 13 },
   editInput: {
     borderWidth: 1.5,
     borderColor: COLORS.blue,

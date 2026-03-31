@@ -11,6 +11,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import {
+  getFileColor,
+  getFileIcon,
+  SearchIcon
+} from "../components/Icons";
 import { getMaterials, getSubjects } from "../services/api";
 
 const ICON_COLORS = [
@@ -36,19 +41,6 @@ const SUBJECT_ICONS = {
   graphics: "🖼️",
   math: "📐",
   science: "🔬",
-};
-const FILE_ICON = {
-  pdf: "📄",
-  docx: "📝",
-  doc: "📝",
-  ppt: "📊",
-  pptx: "📊",
-  mp4: "🎬",
-  mov: "🎬",
-  webm: "🎬",
-  jpg: "🖼️",
-  jpeg: "🖼️",
-  png: "🖼️",
 };
 const getIcon = (name) => {
   const n = name.toLowerCase();
@@ -146,8 +138,13 @@ export default function StudentCoursesScreen({ route, navigation }) {
       onPress={() => navigation.navigate("MaterialViewer", { material: m })}
       activeOpacity={0.85}
     >
-      <View style={st.matIconBox}>
-        <Text style={st.matIcon}>{FILE_ICON[m.fileType] || "📎"}</Text>
+      <View
+        style={[
+          st.matIconBox,
+          { backgroundColor: getFileColor(m.fileType) + "18" },
+        ]}
+      >
+        {getFileIcon(m.fileType, 24)}
       </View>
       <View style={st.matInfo}>
         <Text style={st.matSubject}>{m.subjectId?.name || "—"}</Text>
@@ -176,7 +173,7 @@ export default function StudentCoursesScreen({ route, navigation }) {
 
         {/* Search box */}
         <View style={st.searchBox}>
-          <Text style={st.searchIcon}>🔍</Text>
+          <SearchIcon size={18} color="#aaa" />
           <TextInput
             style={st.searchInput}
             placeholder="Search subjects or materials..."

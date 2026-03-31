@@ -69,10 +69,23 @@ function ProfileStack() {
 }
 
 const TAB_ICONS = {
-  Home: { icon: "🏠", label: "Home" },
-  Courses: { icon: "📖", label: "Courses" },
-  Updates: { icon: "🔔", label: "Updates" },
-  Profile: { icon: "👤", label: "Profile" },
+  Home: { label: "Home" },
+  Courses: { label: "Courses" },
+  Updates: { label: "Updates" },
+  Profile: { label: "Profile" },
+};
+
+const TabSvgIcon = ({ name, focused }) => {
+  const color = focused ? "#1a3a5c" : "rgba(26,58,92,0.35)";
+  const sw = focused ? 2.5 : 1.8;
+  if (name === "Home") return <HomeIcon color={color} sw={sw} size={22} />;
+  if (name === "Courses")
+    return <CoursesIcon color={color} sw={sw} size={22} />;
+  if (name === "Updates")
+    return <UpdatesIcon color={color} sw={sw} size={22} />;
+  if (name === "Profile")
+    return <ProfileIcon color={color} sw={sw} size={22} />;
+  return null;
 };
 
 function CustomTabBar({ state, navigation }) {
@@ -106,9 +119,7 @@ function CustomTabBar({ state, navigation }) {
             activeOpacity={0.7}
           >
             <View style={styles.iconWrap}>
-              <Text style={[styles.tabIcon, focused && styles.tabIconActive]}>
-                {tab.icon}
-              </Text>
+              <TabSvgIcon name={route.name} focused={focused} />
               {showBadge && <View style={styles.badge} />}
             </View>
             <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
@@ -154,8 +165,7 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   iconWrap: { position: "relative" },
-  tabIcon: { fontSize: 22, marginBottom: 3, opacity: 0.4 },
-  tabIconActive: { opacity: 1 },
+  tabIcon: { marginBottom: 3 },
   badge: {
     position: "absolute",
     top: -2,

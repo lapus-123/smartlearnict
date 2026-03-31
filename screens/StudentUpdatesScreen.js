@@ -9,39 +9,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import {
+  getFileColor,
+  getFileIcon
+} from "../components/Icons";
 import { getRecentMaterials } from "../services/api";
 import {
   getSeenIds,
   markMaterialSeen,
   markUpdatesAsSeen,
 } from "../utils/notifBadge";
-
-const FILE_ICON = {
-  pdf: "📄",
-  docx: "📝",
-  doc: "📝",
-  ppt: "📊",
-  pptx: "📊",
-  mp4: "🎬",
-  mov: "🎬",
-  webm: "🎬",
-  jpg: "🖼️",
-  jpeg: "🖼️",
-  png: "🖼️",
-};
-const FILE_COLOR = {
-  pdf: "#E53935",
-  docx: "#1976D2",
-  doc: "#1976D2",
-  ppt: "#E65100",
-  pptx: "#E65100",
-  mp4: "#7B2FBE",
-  mov: "#7B2FBE",
-  webm: "#7B2FBE",
-  jpg: "#2d9e5f",
-  jpeg: "#2d9e5f",
-  png: "#2d9e5f",
-};
 
 const timeAgo = (dateStr) => {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -132,12 +109,10 @@ export default function StudentUpdatesScreen({ navigation }) {
               <View
                 style={[
                   styles.iconBox,
-                  { backgroundColor: FILE_COLOR[m.fileType] || "#1736F5" },
+                  { backgroundColor: getFileColor(m.fileType) + "22" },
                 ]}
               >
-                <Text style={styles.iconText}>
-                  {FILE_ICON[m.fileType] || "📎"}
-                </Text>
+                {getFileIcon(m.fileType, 26)}
               </View>
             </View>
 

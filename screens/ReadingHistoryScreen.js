@@ -11,20 +11,6 @@ import {
 } from "react-native";
 import { getReadingHistory } from "../services/api";
 
-const FILE_ICON = {
-  pdf: "📄",
-  docx: "📝",
-  doc: "📝",
-  ppt: "📊",
-  pptx: "📊",
-  mp4: "🎬",
-  mov: "🎬",
-  webm: "🎬",
-  jpg: "🖼️",
-  jpeg: "🖼️",
-  png: "🖼️",
-};
-
 const formatDate = (d) => {
   const date = new Date(d);
   return (
@@ -73,7 +59,7 @@ export default function ReadingHistoryScreen({ navigation }) {
         >
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Reading Log</Text>
+        <Text style={styles.title}>History Log</Text>
       </View>
 
       {loading ? (

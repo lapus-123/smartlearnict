@@ -69,7 +69,7 @@ export default function StudentProfileScreen({ navigation }) {
 
         <TouchableOpacity
           style={styles.logBtn}
-          onPress={() => navigation.navigate("ReadingHistory")}
+          onPress={() => navigation.navigate("Reading History")}
         >
           <View style={styles.svgWrap}>
             <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">

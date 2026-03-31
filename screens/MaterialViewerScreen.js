@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { getFileIcon } from "../components/Icons";
 import { COLORS } from "../config";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -25,17 +26,17 @@ import {
 import { trackMaterial } from "../utils/resumeTracker";
 
 const FILE_META = {
-  pdf: { icon: "📄", label: "PDF Document", color: "#E53935" },
-  docx: { icon: "📝", label: "Word Document", color: "#1976D2" },
-  doc: { icon: "📝", label: "Word Document", color: "#1976D2" },
-  ppt: { icon: "📊", label: "PowerPoint", color: "#E65100" },
-  pptx: { icon: "📊", label: "PowerPoint", color: "#E65100" },
-  mp4: { icon: "🎬", label: "Video", color: "#7B2FBE" },
-  mov: { icon: "🎬", label: "Video", color: "#7B2FBE" },
-  webm: { icon: "🎬", label: "Video", color: "#7B2FBE" },
-  jpg: { icon: "🖼️", label: "Image", color: "#2d9e5f" },
-  jpeg: { icon: "🖼️", label: "Image", color: "#2d9e5f" },
-  png: { icon: "🖼️", label: "Image", color: "#2d9e5f" },
+  pdf: { label: "PDF Document", color: "#E53935" },
+  docx: { label: "Word Document", color: "#1976D2" },
+  doc: { label: "Word Document", color: "#1976D2" },
+  ppt: { label: "PowerPoint", color: "#E65100" },
+  pptx: { label: "PowerPoint", color: "#E65100" },
+  mp4: { label: "Video", color: "#7B2FBE" },
+  mov: { label: "Video", color: "#7B2FBE" },
+  webm: { label: "Video", color: "#7B2FBE" },
+  jpg: { label: "Image", color: "#2d9e5f" },
+  jpeg: { label: "Image", color: "#2d9e5f" },
+  png: { label: "Image", color: "#2d9e5f" },
 };
 
 const formatDate = (d) => {
@@ -285,10 +286,10 @@ export default function MaterialViewerScreen({ route, navigation }) {
             <View
               style={[
                 styles.fileIconBox,
-                { backgroundColor: meta.color + "15" },
+                { backgroundColor: meta.color + "22" },
               ]}
             >
-              <Text style={styles.fileIcon}>{meta.icon}</Text>
+              {getFileIcon(ft, 28)}
             </View>
             <View style={{ flex: 1, marginLeft: 15 }}>
               <Text style={styles.materialTitle}>{material.title}</Text>
@@ -428,7 +429,7 @@ export default function MaterialViewerScreen({ route, navigation }) {
                             { backgroundColor: fMeta.color + "18" },
                           ]}
                         >
-                          <Text style={{ fontSize: 24 }}>{fMeta.icon}</Text>
+                          {getFileIcon(fExt, 24)}
                         </View>
                         <View style={{ flex: 1 }}>
                           <Text style={styles.fileCardNum}>FILE {i + 1}</Text>

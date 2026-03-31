@@ -47,6 +47,7 @@ export const deleteUser = (id) => api.delete(`/admin/users/${id}`);
 // ── Subjects ──────────────────────────────────────────────────────────────────
 export const getSubjects = (params) => api.get("/subjects", { params });
 export const createSubject = (data) => api.post("/subjects", data);
+export const deleteSubject = (id) => api.delete(`/subjects/${id}`);
 export const updateSubject = (id, data) => api.put(`/subjects/${id}`, data);
 
 // ── Materials ─────────────────────────────────────────────────────────────────

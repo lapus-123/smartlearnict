@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { BellIcon, CoursesIcon, SearchIcon } from "../components/Icons";
 import { useAuth } from "../contexts/AuthContext";
 import { getRecentMaterials, getSubjects } from "../services/api";
 import { hasUnseenUpdates } from "../utils/notifBadge";
@@ -114,13 +115,13 @@ export default function InstructorHomeScreen({ navigation }) {
               style={s.iconBtn}
               onPress={() => navigation.navigate("Courses")}
             >
-              <Text style={s.iconBtnText}>🔍</Text>
+              <SearchIcon size={18} color="#1a3a5c" />
             </TouchableOpacity>
             <TouchableOpacity
               style={s.iconBtn}
               onPress={() => navigation.navigate("Updates")}
             >
-              <Text style={s.iconBtnText}>🔔</Text>
+              <BellIcon size={18} color="#1a3a5c" />
               {hasBadge && <View style={s.iconBadge} />}
             </TouchableOpacity>
           </View>
@@ -182,7 +183,7 @@ export default function InstructorHomeScreen({ navigation }) {
                     { backgroundColor: ICON_COLORS[i % ICON_COLORS.length] },
                   ]}
                 >
-                  <Text style={s.coreIconText}>{getIcon(sub.name)}</Text>
+                  <CoursesIcon size={26} color="#fff" />
                 </View>
                 <Text style={s.coreLabel}>MAJOR SUBJECT</Text>
                 <Text style={s.coreName}>{sub.name}</Text>
@@ -192,6 +193,36 @@ export default function InstructorHomeScreen({ navigation }) {
               <Text style={s.emptyHoriz}>No core subjects yet.</Text>
             )}
           </ScrollView>
+        )}
+
+        {/* When no specializations — show core as vertical list */}
+        {!loading && specSubjects.length === 0 && coreSubjects.length > 0 && (
+          <View style={s.specList}>
+            {coreSubjects.map((sub, i) => (
+              <TouchableOpacity
+                key={sub._id + "_v"}
+                style={s.specRow}
+                onPress={() =>
+                  navigation.navigate("SubjectMaterials", { subject: sub })
+                }
+                activeOpacity={0.85}
+              >
+                <View
+                  style={[
+                    s.specIcon,
+                    { backgroundColor: ICON_COLORS[i % ICON_COLORS.length] },
+                  ]}
+                >
+                  <Text style={s.specIconText}>{getIcon(sub.name)}</Text>
+                </View>
+                <View style={s.specInfo}>
+                  <Text style={s.specName}>{sub.name}</Text>
+                  <Text style={s.specLabel}>MAJOR SUBJECT</Text>
+                </View>
+                <Text style={s.specArrow}>›</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         )}
 
         {/* Specialization */}

@@ -13,6 +13,9 @@ import {
 } from "react-native";
 import Button from "../components/Button";
 import Dropdown from "../components/Dropdown";
+import {
+  getFileIcon
+} from "../components/Icons";
 import Input from "../components/Input";
 import PopupModal from "../components/PopupModal";
 import {
@@ -22,19 +25,6 @@ import {
   uploadMaterial,
 } from "../services/api";
 
-const FILE_ICON = {
-  pdf: "📄",
-  docx: "📝",
-  doc: "📝",
-  ppt: "📊",
-  pptx: "📊",
-  mp4: "🎬",
-  mov: "🎬",
-  webm: "🎬",
-  jpg: "🖼️",
-  jpeg: "🖼️",
-  png: "🖼️",
-};
 const MIME_MAP = {
   pdf: "application/pdf",
   doc: "application/msword",
@@ -301,7 +291,7 @@ export default function InstructorUploadScreen({ navigation }) {
               numberOfLines={3}
             />
             <TouchableOpacity style={s.filePicker} onPress={pickFile}>
-              <Text style={s.filePickerIcon}>📎</Text>
+              <FileIcon size={28} color="#1a3a5c" />
               <View style={{ flex: 1 }}>
                 <Text style={s.filePickerLabel}>Add Files</Text>
                 <Text style={s.filePickerName}>
@@ -364,10 +354,7 @@ export default function InstructorUploadScreen({ navigation }) {
                         marginBottom: 8,
                       }}
                     >
-                      <Text style={{ fontSize: 22 }}>
-                        {FILE_ICON[f.name?.split(".").pop()?.toLowerCase()] ||
-                          "📎"}
-                      </Text>
+                      {getFileIcon(f.name?.split(".").pop()?.toLowerCase(), 22)}
                       <Text
                         style={{
                           flex: 1,
@@ -452,9 +439,7 @@ export default function InstructorUploadScreen({ navigation }) {
                 filtered.map((item) => (
                   <View key={item._id} style={s.matCard}>
                     <View style={s.matHeader}>
-                      <Text style={s.matFileIcon}>
-                        {FILE_ICON[item.fileType] || "📎"}
-                      </Text>
+                      {getFileIcon(item.fileType, 30)}
                       <View style={{ flex: 1 }}>
                         <Text style={s.matTitle} numberOfLines={2}>
                           {item.title}

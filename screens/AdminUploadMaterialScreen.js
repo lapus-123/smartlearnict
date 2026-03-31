@@ -14,6 +14,10 @@ import {
 } from "react-native";
 import Button from "../components/Button";
 import Dropdown from "../components/Dropdown";
+import {
+  getFileIcon,
+  SearchIcon
+} from "../components/Icons";
 import Input from "../components/Input";
 import PopupModal from "../components/PopupModal";
 import {
@@ -23,19 +27,6 @@ import {
   uploadMaterial,
 } from "../services/api";
 
-const FILE_ICON = {
-  pdf: "📄",
-  docx: "📝",
-  doc: "📝",
-  ppt: "📊",
-  pptx: "📊",
-  mp4: "🎬",
-  mov: "🎬",
-  webm: "🎬",
-  jpg: "🖼️",
-  jpeg: "🖼️",
-  png: "🖼️",
-};
 const MIME_MAP = {
   pdf: "application/pdf",
   doc: "application/msword",
@@ -321,7 +312,7 @@ export default function AdminUploadMaterialScreen({ navigation }) {
               onPress={pickFiles}
               activeOpacity={0.8}
             >
-              <Text style={s.pickerIcon}>📎</Text>
+              <FileIcon size={28} color="#1a3a5c" />
               <View style={{ flex: 1 }}>
                 <Text style={s.pickerLabel}>Add Files</Text>
                 <Text style={s.pickerSub}>
@@ -343,9 +334,7 @@ export default function AdminUploadMaterialScreen({ navigation }) {
                 {files.map((f, i) => (
                   <View key={i} style={s.fileItem}>
                     <View style={s.fileItemTop}>
-                      <Text style={s.fileItemIcon}>
-                        {FILE_ICON[getExt(f.name)] || "📎"}
-                      </Text>
+                      {getFileIcon(getExt(f.name), 26)}
                       <View style={{ flex: 1 }}>
                         <Text style={s.fileItemName} numberOfLines={1}>
                           {f.name}
@@ -388,7 +377,7 @@ export default function AdminUploadMaterialScreen({ navigation }) {
         <View style={s.listContainer}>
           {/* Search bar */}
           <View style={s.searchBar}>
-            <Text style={s.searchIcon}>🔍</Text>
+            <SearchIcon size={16} color="#aaa" />
             <TextInput
               style={s.searchInput}
               placeholder="Search materials..."
@@ -451,9 +440,7 @@ export default function AdminUploadMaterialScreen({ navigation }) {
                 filteredMats.map((item) => (
                   <View key={item._id} style={s.matCard}>
                     <View style={s.matHeader}>
-                      <Text style={s.matFileIcon}>
-                        {FILE_ICON[item.fileType] || "📎"}
-                      </Text>
+                      {getFileIcon(item.fileType, 30)}
                       <View style={{ flex: 1 }}>
                         <Text style={s.matTitle} numberOfLines={2}>
                           {item.title}
