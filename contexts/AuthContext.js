@@ -81,10 +81,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    await AsyncStorage.removeItem(SESSION_KEY);
-    setAuthToken(null);
     setCurrentUser(null);
     setToken(null);
+    setAuthToken(null);
+    try {
+      await AsyncStorage.removeItem(SESSION_KEY);
+    } catch (_) {}
   };
 
   return (

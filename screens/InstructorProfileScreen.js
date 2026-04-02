@@ -1,5 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import {
+  Alert,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -13,6 +14,12 @@ import { useAuth } from "../contexts/AuthContext";
 
 export default function InstructorProfileScreen({ navigation }) {
   const { currentUser, logout } = useAuth();
+  const confirmLogout = () => {
+    Alert.alert("Logout", "Would you like to log out?", [
+      { text: "No", style: "cancel" },
+      { text: "Yes", style: "destructive", onPress: logout },
+    ]);
+  };
 
   const rows = [
     { label: "Full Name", value: currentUser?.fullName },
@@ -68,7 +75,7 @@ export default function InstructorProfileScreen({ navigation }) {
 
         <TouchableOpacity
           style={s.logBtn}
-          onPress={() => navigation.navigate("Reading History")}
+          onPress={() => navigation.navigate("ReadingHistory")}
         >
           <View style={s.svgWrap}>
             <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
@@ -96,7 +103,7 @@ export default function InstructorProfileScreen({ navigation }) {
           </Svg>
         </TouchableOpacity>
 
-        <TouchableOpacity style={s.logoutBtn} onPress={logout}>
+        <TouchableOpacity style={s.logoutBtn} onPress={confirmLogout}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
               <Path

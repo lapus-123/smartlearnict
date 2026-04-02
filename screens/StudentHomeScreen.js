@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { BellIcon, CoursesIcon, SearchIcon } from "../components/Icons";
+import { BellIcon, getSubjectIcon, SearchIcon } from "../components/Icons";
 import { useAuth } from "../contexts/AuthContext";
 import { getRecentMaterials, getSubjects } from "../services/api";
 import { hasUnseenUpdates, markUpdatesAsSeen } from "../utils/notifBadge";
@@ -75,7 +75,10 @@ export default function StudentHomeScreen({ navigation }) {
           setCoreSubjects(core.data.subjects);
           setSpecSubjects(spec.data.subjects);
         })
-        .catch(() => {})
+        .catch(() => {
+          setCoreSubjects([]);
+          setSpecSubjects([]);
+        })
         .finally(() => setLoading(false));
 
       // Load last accessed material for Resume Learning
@@ -231,7 +234,7 @@ export default function StudentHomeScreen({ navigation }) {
                     { backgroundColor: ICON_COLORS[i % ICON_COLORS.length] },
                   ]}
                 >
-                  <CoursesIcon size={26} color="#fff" />
+                  {getSubjectIcon(s.name, 26, "#fff")}
                 </View>
                 <Text style={styles.coreCardLabel}>MAJOR SUBJECT</Text>
                 <Text style={styles.coreCardName}>{s.name}</Text>
@@ -261,13 +264,13 @@ export default function StudentHomeScreen({ navigation }) {
                     { backgroundColor: ICON_COLORS[i % ICON_COLORS.length] },
                   ]}
                 >
-                  <CoursesIcon size={22} color="#fff" />
+                  {getSubjectIcon(s.name, 22, "#fff")}
                 </View>
                 <View style={styles.specInfo}>
                   <Text style={styles.specName}>{s.name}</Text>
                   <Text style={styles.specLabel}>MAJOR SUBJECT</Text>
                 </View>
-                <Text style={styles.specArrow}>›</Text>
+                <SearchIcon size={16} color="#aaa" />
               </TouchableOpacity>
             ))}
           </View>
@@ -320,7 +323,7 @@ export default function StudentHomeScreen({ navigation }) {
                     <Text style={styles.specName}>{s.name}</Text>
                     <Text style={styles.specLabel}>SPECIALIZATION</Text>
                   </View>
-                  <Text style={styles.specArrow}>›</Text>
+                  <SearchIcon size={16} color="#aaa" />
                 </TouchableOpacity>
               ))}
             </View>

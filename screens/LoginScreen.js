@@ -54,13 +54,16 @@ export default function LoginScreen({ navigation }) {
         message: result.message,
         type: "error",
       });
-    else
+    else {
+      // For admin: navigate immediately via auth state (no popup delay)
+      if (result.role === "admin") return;
       setPopup({
         visible: true,
         title: "Welcome Back!",
         message: "Redirecting to your dashboard...",
         type: "success",
       });
+    }
   };
 
   return (

@@ -3,6 +3,12 @@ import { useFocusEffect } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useCallback, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  CoursesIcon,
+  HomeIcon,
+  ProfileIcon,
+  UpdatesIcon,
+} from "../components/Icons";
 
 import MaterialViewerScreen from "../screens/MaterialViewerScreen";
 import ReaderScreen from "../screens/ReaderScreen";
@@ -150,19 +156,23 @@ export default function StudentTabNavigator() {
 const styles = StyleSheet.create({
   tabBar: {
     flexDirection: "row",
-    backgroundColor: "rgba(255,255,255,0.95)",
-    elevation: 20,
+    backgroundColor: "#fff",
+    elevation: 24,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    paddingBottom: 6,
-    paddingTop: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    paddingBottom: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "#E8EEFF",
   },
   tabItem: {
     flex: 1,
     alignItems: "center",
+    justifyContent: "center",
     position: "relative",
-    paddingBottom: 4,
+    paddingVertical: 4,
+    minHeight: 52,
   },
   iconWrap: { position: "relative" },
   tabIcon: { marginBottom: 3 },
@@ -177,8 +187,8 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "#fff",
   },
-  tabLabel: { fontSize: 10, fontWeight: "600", color: "#aaa" },
-  tabLabelActive: { color: "#1a3a5c", fontWeight: "800" },
+  tabLabel: { fontSize: 11, fontWeight: "600", color: "#aaa", marginTop: 4 },
+  tabLabelActive: { color: "#1a3a5c", fontWeight: "900" },
   tabIndicator: {
     position: "absolute",
     bottom: -2,

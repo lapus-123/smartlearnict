@@ -2,6 +2,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useState } from "react";
 import {
+  Alert,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -14,6 +15,13 @@ import { getInstructorRequests } from "../services/api";
 
 export default function AdminDashboard({ navigation }) {
   const { currentUser, logout } = useAuth();
+  const confirmLogout = () => {
+    Alert.alert("Logout", "Would you like to log out?", [
+      { text: "No", style: "cancel" },
+      { text: "Yes", style: "destructive", onPress: logout },
+    ]);
+  };
+
   const [pendingCount, setPendingCount] = useState(0);
 
   useFocusEffect(
@@ -157,7 +165,7 @@ export default function AdminDashboard({ navigation }) {
         {/* Logout */}
         <TouchableOpacity
           style={s.logoutBtn}
-          onPress={logout}
+          onPress={confirmLogout}
           activeOpacity={0.8}
         >
           <Text style={s.logoutText}>Logout</Text>

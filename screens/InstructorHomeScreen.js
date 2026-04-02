@@ -11,7 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { BellIcon, CoursesIcon, SearchIcon } from "../components/Icons";
+import { BellIcon, getSubjectIcon, SearchIcon } from "../components/Icons";
 import { useAuth } from "../contexts/AuthContext";
 import { getRecentMaterials, getSubjects } from "../services/api";
 import { hasUnseenUpdates } from "../utils/notifBadge";
@@ -66,7 +66,10 @@ export default function InstructorHomeScreen({ navigation }) {
           setCoreSubjects(c.data.subjects);
           setSpecSubjects(s.data.subjects);
         })
-        .catch(() => {})
+        .catch(() => {
+          setCoreSubjects([]);
+          setSpecSubjects([]);
+        })
         .finally(() => setLoading(false));
 
       getRecentMaterials()
@@ -183,7 +186,7 @@ export default function InstructorHomeScreen({ navigation }) {
                     { backgroundColor: ICON_COLORS[i % ICON_COLORS.length] },
                   ]}
                 >
-                  <CoursesIcon size={26} color="#fff" />
+                  {getSubjectIcon(sub.name, 26, "#fff")}
                 </View>
                 <Text style={s.coreLabel}>MAJOR SUBJECT</Text>
                 <Text style={s.coreName}>{sub.name}</Text>

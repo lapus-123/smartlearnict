@@ -48,7 +48,13 @@ function RootNavigator() {
 
   if (!currentUser)
     return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          gestureEnabled: false,
+          animation: "fade",
+        }}
+      >
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
@@ -57,7 +63,9 @@ function RootNavigator() {
 
   if (currentUser.role === "admin")
     return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        screenOptions={{ headerShown: false, gestureEnabled: false }}
+      >
         <Stack.Screen name="AdminDashboard" component={AdminDashboard} />
         <Stack.Screen name="CollegeManager" component={CollegeManagerScreen} />
         <Stack.Screen name="SectionManager" component={SectionManagerScreen} />
