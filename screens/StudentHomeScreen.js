@@ -28,31 +28,6 @@ const ICON_COLORS = [
   "#2EAB9E",
 ];
 
-const SUBJECT_ICONS = {
-  default: "📖",
-  animation: "🎬",
-  video: "🎬",
-  audio: "🎧",
-  programming: "💻",
-  web: "🌐",
-  database: "🗄️",
-  network: "🔗",
-  design: "🎨",
-  graphics: "🖼️",
-  math: "📐",
-  science: "🔬",
-  author: "🔧",
-  production: "🎬",
-};
-
-const getIcon = (name) => {
-  const n = name.toLowerCase();
-  for (const key of Object.keys(SUBJECT_ICONS)) {
-    if (n.includes(key)) return SUBJECT_ICONS[key];
-  }
-  return SUBJECT_ICONS.default;
-};
-
 export default function StudentHomeScreen({ navigation }) {
   const { currentUser } = useAuth();
   const [coreSubjects, setCoreSubjects] = useState([]);
@@ -244,90 +219,6 @@ export default function StudentHomeScreen({ navigation }) {
               <Text style={styles.emptyHoriz}>No core subjects added yet.</Text>
             )}
           </ScrollView>
-        )}
-
-        {/* When no specializations — show core subjects as vertical list too */}
-        {!loading && specSubjects.length === 0 && coreSubjects.length > 0 && (
-          <View style={styles.specList}>
-            {coreSubjects.map((s, i) => (
-              <TouchableOpacity
-                key={s._id + "_v"}
-                style={styles.specRow}
-                onPress={() =>
-                  navigation.navigate("SubjectMaterials", { subject: s })
-                }
-                activeOpacity={0.85}
-              >
-                <View
-                  style={[
-                    styles.specIcon,
-                    { backgroundColor: ICON_COLORS[i % ICON_COLORS.length] },
-                  ]}
-                >
-                  {getSubjectIcon(s.name, 22, "#fff")}
-                </View>
-                <View style={styles.specInfo}>
-                  <Text style={styles.specName}>{s.name}</Text>
-                  <Text style={styles.specLabel}>MAJOR SUBJECT</Text>
-                </View>
-                <SearchIcon size={16} color="#aaa" />
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {/* Supporting Courses (Specialization) — hidden when empty, core expands */}
-        {!loading && specSubjects.length > 0 && (
-          <>
-            <View style={[styles.sectionHeader, { marginTop: 8 }]}>
-              <View style={styles.sectionLeft}>
-                <Text style={styles.sectionIcon}>◉</Text>
-                <View>
-                  <Text style={styles.sectionTitle}>SUPPORTING COURSES</Text>
-                  <Text style={styles.sectionSub}>Specialized Modules</Text>
-                </View>
-              </View>
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate("Courses", {
-                    screen: "StudentCoursesList",
-                    params: { filter: "specialization" },
-                  })
-                }
-              >
-                <Text style={styles.viewAll}>VIEW ALL</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.specList}>
-              {specSubjects.map((s, i) => (
-                <TouchableOpacity
-                  key={s._id}
-                  style={styles.specRow}
-                  onPress={() =>
-                    navigation.navigate("SubjectMaterials", { subject: s })
-                  }
-                  activeOpacity={0.85}
-                >
-                  <View
-                    style={[
-                      styles.specIcon,
-                      {
-                        backgroundColor:
-                          ICON_COLORS[(i + 4) % ICON_COLORS.length],
-                      },
-                    ]}
-                  >
-                    <CoursesIcon size={22} color="#fff" />
-                  </View>
-                  <View style={styles.specInfo}>
-                    <Text style={styles.specName}>{s.name}</Text>
-                    <Text style={styles.specLabel}>SPECIALIZATION</Text>
-                  </View>
-                  <SearchIcon size={16} color="#aaa" />
-                </TouchableOpacity>
-              ))}
-            </View>
-          </>
         )}
 
         <View style={{ height: 20 }} />

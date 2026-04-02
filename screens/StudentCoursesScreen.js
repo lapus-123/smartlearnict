@@ -15,6 +15,7 @@ import {
   ChevronRight,
   getFileColor,
   getFileIcon,
+  getSubjectIcon,
   SearchIcon
 } from "../components/Icons";
 import { getMaterials, getSubjects } from "../services/api";
@@ -101,7 +102,7 @@ export default function StudentCoursesScreen({ route, navigation }) {
           { backgroundColor: ICON_COLORS[index % ICON_COLORS.length] },
         ]}
       >
-        <Text style={st.rowIconText}>{getIcon(s.name)}</Text>
+        {getSubjectIcon(s.name, 24, "#fff")}
       </View>
       <View style={st.rowInfo}>
         <Text style={st.rowBadge}>

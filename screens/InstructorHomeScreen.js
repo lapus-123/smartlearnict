@@ -27,25 +27,6 @@ const ICON_COLORS = [
   "#3B7BE8",
   "#2EAB9E",
 ];
-const SUBJECT_ICONS = {
-  default: "📖",
-  programming: "💻",
-  web: "🌐",
-  database: "🗄️",
-  network: "🔗",
-  design: "🎨",
-  graphics: "🖼️",
-  math: "📐",
-  science: "🔬",
-  video: "🎬",
-  animation: "🎬",
-};
-const getIcon = (name) => {
-  const n = name.toLowerCase();
-  for (const k of Object.keys(SUBJECT_ICONS))
-    if (n.includes(k)) return SUBJECT_ICONS[k];
-  return SUBJECT_ICONS.default;
-};
 
 export default function InstructorHomeScreen({ navigation }) {
   const { currentUser } = useAuth();
@@ -133,13 +114,11 @@ export default function InstructorHomeScreen({ navigation }) {
         {/* Resume card */}
         <View style={s.progressCard}>
           <View style={s.progressTop}>
-            <Text style={s.progressIcon}>⭐</Text>
             <Text style={s.progressLabel}>CONTINUE LEARNING</Text>
           </View>
           <Text style={s.progressTitle}>Pick up where you left off</Text>
           {lastMaterial && (
             <View style={s.lastRow}>
-              <Text style={s.lastIcon}>📖</Text>
               <Text style={s.lastName} numberOfLines={1}>
                 {lastMaterial.title}
               </Text>
@@ -150,10 +129,9 @@ export default function InstructorHomeScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        {/* Core Subjects */}
+        {/* Core Subjects — 4 square grid */}
         <View style={s.sectionHeader}>
           <View style={s.sectionLeft}>
-            <Text style={s.sectionIcon}>📚</Text>
             <View>
               <Text style={s.sectionTitle}>CORE SUBJECTS</Text>
               <Text style={s.sectionSub}>Major Modules</Text>
@@ -164,87 +142,15 @@ export default function InstructorHomeScreen({ navigation }) {
         {loading ? (
           <ActivityIndicator color="#fff" style={{ marginBottom: 20 }} />
         ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            nestedScrollEnabled
-            contentContainerStyle={s.horizContent}
-            style={s.horizScroll}
-          >
-            {coreSubjects.map((sub, i) => (
-              <TouchableOpacity
-                key={sub._id}
-                style={s.coreCard}
-                onPress={() =>
-                  navigation.navigate("SubjectMaterials", { subject: sub })
-                }
-                activeOpacity={0.85}
-              >
-                <View
-                  style={[
-                    s.coreIconBox,
-                    { backgroundColor: ICON_COLORS[i % ICON_COLORS.length] },
-                  ]}
-                >
-                  {getSubjectIcon(sub.name, 26, "#fff")}
-                </View>
-                <Text style={s.coreLabel}>MAJOR SUBJECT</Text>
-                <Text style={s.coreName}>{sub.name}</Text>
-              </TouchableOpacity>
-            ))}
+          <>
             {coreSubjects.length === 0 && (
               <Text style={s.emptyHoriz}>No core subjects yet.</Text>
             )}
-          </ScrollView>
-        )}
-
-        {/* When no specializations — show core as vertical list */}
-        {!loading && specSubjects.length === 0 && coreSubjects.length > 0 && (
-          <View style={s.specList}>
-            {coreSubjects.map((sub, i) => (
-              <TouchableOpacity
-                key={sub._id + "_v"}
-                style={s.specRow}
-                onPress={() =>
-                  navigation.navigate("SubjectMaterials", { subject: sub })
-                }
-                activeOpacity={0.85}
-              >
-                <View
-                  style={[
-                    s.specIcon,
-                    { backgroundColor: ICON_COLORS[i % ICON_COLORS.length] },
-                  ]}
-                >
-                  <Text style={s.specIconText}>{getIcon(sub.name)}</Text>
-                </View>
-                <View style={s.specInfo}>
-                  <Text style={s.specName}>{sub.name}</Text>
-                  <Text style={s.specLabel}>MAJOR SUBJECT</Text>
-                </View>
-                <Text style={s.specArrow}>›</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-
-        {/* Specialization */}
-        {!loading && specSubjects.length > 0 && (
-          <>
-            <View style={[s.sectionHeader, { marginTop: 8 }]}>
-              <View style={s.sectionLeft}>
-                <Text style={s.sectionIcon}>👥</Text>
-                <View>
-                  <Text style={s.sectionTitle}>SUPPORTING COURSES</Text>
-                  <Text style={s.sectionSub}>Specialized Modules</Text>
-                </View>
-              </View>
-            </View>
-            <View style={s.specList}>
-              {specSubjects.map((sub, i) => (
+            <View style={s.gridWrap}>
+              {coreSubjects.slice(0, 4).map((sub, i) => (
                 <TouchableOpacity
                   key={sub._id}
-                  style={s.specRow}
+                  style={s.gridCard}
                   onPress={() =>
                     navigation.navigate("SubjectMaterials", { subject: sub })
                   }
@@ -252,25 +158,56 @@ export default function InstructorHomeScreen({ navigation }) {
                 >
                   <View
                     style={[
-                      s.specIcon,
-                      {
-                        backgroundColor:
-                          ICON_COLORS[(i + 4) % ICON_COLORS.length],
-                      },
+                      s.gridIconBox,
+                      { backgroundColor: ICON_COLORS[i % ICON_COLORS.length] },
                     ]}
                   >
-                    <Text style={s.specIconText}>{getIcon(sub.name)}</Text>
+                    {getSubjectIcon(sub.name, 28, "#fff")}
                   </View>
-                  <View style={s.specInfo}>
-                    <Text style={s.specName}>{sub.name}</Text>
-                    <Text style={s.specLabel}>SPECIALIZATION</Text>
-                  </View>
-                  <Text style={s.specArrow}>›</Text>
+                  <Text style={s.gridName} numberOfLines={2}>
+                    {sub.name}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
+            {coreSubjects.length > 4 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                nestedScrollEnabled
+                contentContainerStyle={s.horizContent}
+                style={{ marginBottom: 12 }}
+              >
+                {coreSubjects.slice(4).map((sub, i) => (
+                  <TouchableOpacity
+                    key={sub._id}
+                    style={s.coreCard}
+                    onPress={() =>
+                      navigation.navigate("SubjectMaterials", { subject: sub })
+                    }
+                    activeOpacity={0.85}
+                  >
+                    <View
+                      style={[
+                        s.coreIconBox,
+                        {
+                          backgroundColor:
+                            ICON_COLORS[(i + 4) % ICON_COLORS.length],
+                        },
+                      ]}
+                    >
+                      {getSubjectIcon(sub.name, 24, "#fff")}
+                    </View>
+                    <Text style={s.coreName} numberOfLines={2}>
+                      {sub.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
           </>
         )}
+
         <View style={{ height: 20 }} />
       </ScrollView>
     </LinearGradient>
@@ -391,6 +328,33 @@ const s = StyleSheet.create({
   sectionSub: { fontSize: 11, color: "rgba(26,58,92,0.7)", marginTop: 1 },
   horizScroll: { marginBottom: 20 },
   horizContent: { paddingRight: 20, paddingBottom: 4 },
+  gridWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 12,
+    marginBottom: 16,
+  },
+  gridCard: {
+    width: "47%",
+    backgroundColor: "rgba(255,255,255,0.88)",
+    borderRadius: 16,
+    padding: 16,
+    alignItems: "flex-start",
+    gap: 10,
+  },
+  gridIconBox: {
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  gridName: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#1a3a5c",
+    lineHeight: 18,
+  },
   coreCard: {
     backgroundColor: "rgba(255,255,255,0.85)",
     borderRadius: 18,

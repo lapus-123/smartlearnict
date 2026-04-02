@@ -14,6 +14,7 @@ import {
 import Button from "../components/Button";
 import Dropdown from "../components/Dropdown";
 import {
+  FileIcon,
   getFileIcon
 } from "../components/Icons";
 import Input from "../components/Input";
