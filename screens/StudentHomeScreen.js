@@ -187,38 +187,68 @@ export default function StudentHomeScreen({ navigation }) {
         {loading ? (
           <ActivityIndicator color="#fff" style={{ marginBottom: 20 }} />
         ) : (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            nestedScrollEnabled={true}
-            contentContainerStyle={styles.horizontalContent}
-            style={styles.horizontalScroll}
-          >
-            {coreSubjects.map((s, i) => (
-              <TouchableOpacity
-                key={s._id}
-                style={styles.coreCard}
-                onPress={() =>
-                  navigation.navigate("SubjectMaterials", { subject: s })
-                }
-                activeOpacity={0.85}
-              >
-                <View
-                  style={[
-                    styles.coreIconBox,
-                    { backgroundColor: ICON_COLORS[i % ICON_COLORS.length] },
-                  ]}
-                >
-                  {getSubjectIcon(s.name, 26, "#fff")}
-                </View>
-                <Text style={styles.coreCardLabel}>MAJOR SUBJECT</Text>
-                <Text style={styles.coreCardName}>{s.name}</Text>
-              </TouchableOpacity>
-            ))}
+          <>
             {coreSubjects.length === 0 && (
               <Text style={styles.emptyHoriz}>No core subjects added yet.</Text>
             )}
-          </ScrollView>
+            <View style={styles.gridWrap}>
+              {coreSubjects.slice(0, 4).map((s, i) => (
+                <TouchableOpacity
+                  key={s._id}
+                  style={styles.gridCard}
+                  onPress={() =>
+                    navigation.navigate("SubjectMaterials", { subject: s })
+                  }
+                  activeOpacity={0.85}
+                >
+                  <View
+                    style={[
+                      styles.gridIconBox,
+                      { backgroundColor: ICON_COLORS[i % ICON_COLORS.length] },
+                    ]}
+                  >
+                    {getSubjectIcon(s.name, 30, "#fff")}
+                  </View>
+                  <Text style={styles.gridName} numberOfLines={2}>
+                    {s.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {coreSubjects.length > 4 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                nestedScrollEnabled
+                contentContainerStyle={styles.horizontalContent}
+                style={styles.horizontalScroll}
+              >
+                {coreSubjects.slice(4).map((s, i) => (
+                  <TouchableOpacity
+                    key={s._id}
+                    style={styles.coreCard}
+                    onPress={() =>
+                      navigation.navigate("SubjectMaterials", { subject: s })
+                    }
+                    activeOpacity={0.85}
+                  >
+                    <View
+                      style={[
+                        styles.coreIconBox,
+                        {
+                          backgroundColor:
+                            ICON_COLORS[(i + 4) % ICON_COLORS.length],
+                        },
+                      ]}
+                    >
+                      {getSubjectIcon(s.name, 26, "#fff")}
+                    </View>
+                    <Text style={styles.coreCardName}>{s.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+          </>
         )}
 
         <View style={{ height: 20 }} />
@@ -347,6 +377,34 @@ const styles = StyleSheet.create({
   },
   horizontalScroll: { marginBottom: 20 },
   horizontalContent: { paddingRight: 20, paddingBottom: 4 },
+  gridWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 14,
+    marginBottom: 16,
+  },
+  gridCard: {
+    width: "47%",
+    backgroundColor: "rgba(255,255,255,0.88)",
+    borderRadius: 20,
+    padding: 20,
+    alignItems: "flex-start",
+    gap: 12,
+    minHeight: 140,
+  },
+  gridIconBox: {
+    width: 58,
+    height: 58,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  gridName: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#1a3a5c",
+    lineHeight: 20,
+  },
   coreCard: {
     backgroundColor: "rgba(255,255,255,0.85)",
     borderRadius: 18,
