@@ -191,11 +191,11 @@ const s = StyleSheet.create({
   logSub: { fontSize: 12, color: "#666", marginTop: 2 },
   logArrow: { fontSize: 22, color: "#aaa", marginLeft: "auto" },
   logoutBtn: {
-    backgroundColor: "rgba(255,255,255,0.5)",
+    backgroundColor: "#E53935",
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
     marginTop: 8,
   },
-  logoutText: { color: "#C62828", fontWeight: "800", fontSize: 15 },
+  logoutText: { color: "#fff", fontWeight: "800", fontSize: 15 },
 });
