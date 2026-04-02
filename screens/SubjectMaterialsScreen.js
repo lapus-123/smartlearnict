@@ -8,6 +8,11 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import {
+  ChevronRight,
+  getFileColor,
+  getFileIcon
+} from "../components/Icons";
 import { COLORS } from "../config";
 import { getMaterials } from "../services/api";
 
@@ -99,15 +104,15 @@ export default function SubjectMaterialsScreen({ route, navigation }) {
           <View
             style={[
               styles.iconBox,
-              { backgroundColor: FILE_COLOR[m.fileType] || COLORS.blue },
+              { backgroundColor: getFileColor(m.fileType) + "22" },
             ]}
           >
-            <Text style={styles.iconText}>{FILE_ICON[m.fileType] || "📎"}</Text>
+            {getFileIcon(m.fileType, 26)}
           </View>
           <View style={styles.cardInfo}>
             <Text style={styles.cardTitle}>{m.title}</Text>
             {m.uploadedByName && m.uploadedByName !== "Admin" && (
-              <Text style={styles.cardUploader}>👤 {m.uploadedByName}</Text>
+              <Text style={styles.cardUploader}>{m.uploadedByName}</Text>
             )}
             {m.description ? (
               <Text style={styles.cardDesc} numberOfLines={2}>
@@ -119,13 +124,12 @@ export default function SubjectMaterialsScreen({ route, navigation }) {
               <Text style={styles.metaYear}>{m.schoolYear}</Text>
             </View>
           </View>
-          <Text style={styles.arrow}>›</Text>
+          <ChevronRight size={18} color="#aaa" />
         </TouchableOpacity>
       ))}
 
       {!loading && filtered.length === 0 && (
         <View style={styles.empty}>
-          <Text style={styles.emptyIcon}>📭</Text>
           <Text style={styles.emptyText}>No materials yet.</Text>
         </View>
       )}

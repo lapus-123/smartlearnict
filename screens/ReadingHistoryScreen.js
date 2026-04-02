@@ -9,6 +9,9 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import {
+  getFileIcon
+} from "../components/Icons";
 import { getReadingHistory } from "../services/api";
 
 const formatDate = (d) => {
@@ -95,9 +98,11 @@ export default function ReadingHistoryScreen({ navigation }) {
                 disabled={!canOpen}
               >
                 <View style={styles.cardLeft}>
-                  <Text style={[styles.fileIcon, !canOpen && styles.fadedText]}>
-                    {FILE_ICON[ft] || "📖"}
-                  </Text>
+                  <View
+                    style={[styles.fileIconWrap, !canOpen && { opacity: 0.4 }]}
+                  >
+                    {getFileIcon(ft, 32)}
+                  </View>
                 </View>
                 <View style={styles.cardBody}>
                   <Text style={[styles.subject, !canOpen && styles.fadedText]}>

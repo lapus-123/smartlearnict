@@ -12,6 +12,7 @@ import {
   View,
 } from "react-native";
 import {
+  ChevronRight,
   getFileColor,
   getFileIcon,
   SearchIcon
@@ -28,26 +29,6 @@ const ICON_COLORS = [
   "#3B7BE8",
   "#2EAB9E",
 ];
-const SUBJECT_ICONS = {
-  default: "📖",
-  animation: "🎬",
-  video: "🎬",
-  audio: "🎧",
-  programming: "💻",
-  web: "🌐",
-  database: "🗄️",
-  network: "🔗",
-  design: "🎨",
-  graphics: "🖼️",
-  math: "📐",
-  science: "🔬",
-};
-const getIcon = (name) => {
-  const n = name.toLowerCase();
-  for (const k of Object.keys(SUBJECT_ICONS))
-    if (n.includes(k)) return SUBJECT_ICONS[k];
-  return SUBJECT_ICONS.default;
-};
 
 const TYPE_FILTERS = [
   { label: "ALL", value: "all" },
@@ -128,7 +109,7 @@ export default function StudentCoursesScreen({ route, navigation }) {
         </Text>
         <Text style={st.rowName}>{s.name}</Text>
       </View>
-      <Text style={st.rowArrow}>›</Text>
+      <ChevronRight size={18} color="#aaa" />
     </TouchableOpacity>
   );
 
@@ -141,7 +122,7 @@ export default function StudentCoursesScreen({ route, navigation }) {
       <View
         style={[
           st.matIconBox,
-          { backgroundColor: getFileColor(m.fileType) + "18" },
+          { backgroundColor: getFileColor(m.fileType) + "22" },
         ]}
       >
         {getFileIcon(m.fileType, 24)}
@@ -155,7 +136,7 @@ export default function StudentCoursesScreen({ route, navigation }) {
           {m.schoolYear} · {m.fileType?.toUpperCase()}
         </Text>
       </View>
-      <Text style={st.rowArrow}>›</Text>
+      <ChevronRight size={18} color="#aaa" />
     </TouchableOpacity>
   );
 
@@ -196,7 +177,7 @@ export default function StudentCoursesScreen({ route, navigation }) {
             onPress={() => setMode("subjects")}
           >
             <Text style={[st.modeTxt, mode === "subjects" && st.modeTxtActive]}>
-              📚 Subjects
+              Subjects
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -206,7 +187,7 @@ export default function StudentCoursesScreen({ route, navigation }) {
             <Text
               style={[st.modeTxt, mode === "materials" && st.modeTxtActive]}
             >
-              📄 Materials
+              Materials
             </Text>
           </TouchableOpacity>
         </View>
