@@ -10,7 +10,7 @@
 // ─────────────────────────────────────────────────────────────────
 
 export const API_URL =
-  "https://smartlearnict-backend-production.up.railway.app/api";
+  "https://smartlearnict-backend-production-7755.up.railway.app/api";
 
 // ─── App Color Palette ────────────────────────────────────────────────────────
 export const COLORS = {
