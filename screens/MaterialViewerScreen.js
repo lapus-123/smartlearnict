@@ -450,6 +450,7 @@ export default function MaterialViewerScreen({ route, navigation }) {
                               ...material,
                               fileUrl: f.fileUrl,
                               fileType: f.fileType,
+                              fileName: f.fileName,
                               publicId: f.publicId,
                             },
                             materialId,

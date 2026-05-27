@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   FlatList,
   Modal,
@@ -8,160 +8,177 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import Svg, { Path } from "react-native-svg";
 import { COLORS } from "../config";
+
+const ChevronDown = ({ open }) => (
+  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+    <Path
+      d={open ? "M18 15l-6-6-6 6" : "M6 9l6 6 6-6"}
+      stroke={COLORS.gray}
+      strokeWidth={2.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </Svg>
+);
 
 export default function Dropdown({
   label,
   placeholder,
-  options,
+  options = [],
   value,
   onChange,
   disabled,
 }) {
   const [open, setOpen] = useState(false);
+  const [layout, setLayout] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    pageY: 0,
+  });
+  const triggerRef = useRef(null);
 
   const selected = options.find((o) => o.value === value);
 
-  return (
-    <View style={styles.wrapper}>
-      {label && <Text style={styles.label}>{label}</Text>}
+  const measureTrigger = () => {
+    triggerRef.current?.measureInWindow((x, y, width, height) => {
+      setLayout({ x, y, width, height, pageY: y });
+      setOpen(true);
+    });
+  };
 
+  return (
+    <View style={s.wrapper}>
+      {label && <Text style={s.label}>{label}</Text>}
+
+      {/* Trigger */}
       <TouchableOpacity
-        style={[styles.input, disabled && styles.disabled]}
+        ref={triggerRef}
+        style={[s.trigger, open && s.triggerOpen, disabled && s.disabled]}
         onPress={() => {
-          if (!disabled) setOpen(true);
+          if (!disabled) {
+            open ? setOpen(false) : measureTrigger();
+          }
         }}
         activeOpacity={0.8}
       >
-        <Text
-          style={selected ? styles.valueText : styles.placeholder}
-          numberOfLines={1}
-        >
+        <Text style={selected ? s.valueText : s.placeholder} numberOfLines={1}>
           {selected ? selected.label : placeholder || "Select..."}
         </Text>
-        <Text style={styles.arrow}>▼</Text>
+        <ChevronDown open={open} />
       </TouchableOpacity>
 
+      {/* Pull-down list in Modal */}
       <Modal
         visible={open}
         transparent
-        animationType="slide"
+        animationType="none"
         onRequestClose={() => setOpen(false)}
       >
-        <View style={styles.modalContainer}>
-          {/* Backdrop — tap to close */}
-          <Pressable style={styles.backdrop} onPress={() => setOpen(false)} />
+        {/* Backdrop */}
+        <Pressable style={s.backdrop} onPress={() => setOpen(false)} />
 
-          {/* Sheet */}
-          <View style={styles.sheet}>
-            <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>{label}</Text>
-              <TouchableOpacity
-                onPress={() => setOpen(false)}
-                style={styles.closeBtn}
-              >
-                <Text style={styles.closeBtnText}>✕</Text>
-              </TouchableOpacity>
-            </View>
-
-            <FlatList
-              data={options}
-              keyExtractor={(item) => String(item.value)}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
-              renderItem={({ item }) => {
-                const isSelected = item.value === value;
-                return (
-                  <Pressable
-                    style={({ pressed }) => [
-                      styles.option,
-                      isSelected && styles.optionSelected,
-                      pressed && styles.optionPressed,
-                    ]}
-                    onPress={() => {
-                      onChange(item.value, item.label);
-                      setOpen(false);
-                    }}
+        {/* Dropdown list positioned below the trigger */}
+        <View
+          style={[
+            s.list,
+            {
+              position: "absolute",
+              top: layout.pageY + layout.height + 4,
+              left: layout.x,
+              width: layout.width,
+            },
+          ]}
+        >
+          <FlatList
+            data={options}
+            keyExtractor={(item) => String(item.value)}
+            keyboardShouldPersistTaps="handled"
+            ItemSeparatorComponent={() => <View style={s.sep} />}
+            renderItem={({ item }) => {
+              const isSelected = item.value === value;
+              return (
+                <Pressable
+                  style={({ pressed }) => [
+                    s.option,
+                    isSelected && s.optionActive,
+                    pressed && s.optionPressed,
+                  ]}
+                  onPress={() => {
+                    onChange(item.value, item.label);
+                    setOpen(false);
+                  }}
+                >
+                  <Text
+                    style={[s.optionText, isSelected && s.optionTextActive]}
+                    numberOfLines={1}
                   >
-                    <Text
-                      style={[
-                        styles.optionText,
-                        isSelected && styles.optionTextSelected,
-                      ]}
-                    >
-                      {item.label}
-                    </Text>
-                    {isSelected && <Text style={styles.checkmark}>✓</Text>}
-                  </Pressable>
-                );
-              }}
-            />
-          </View>
+                    {item.label}
+                  </Text>
+                  {isSelected && (
+                    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+                      <Path
+                        d="M5 13l4 4L19 7"
+                        stroke={COLORS.blue}
+                        strokeWidth={2.5}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </Svg>
+                  )}
+                </Pressable>
+              );
+            }}
+          />
         </View>
       </Modal>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  wrapper: { marginBottom: 14 },
+const s = StyleSheet.create({
+  wrapper: { marginBottom: 8 },
   label: { fontSize: 13, fontWeight: "600", color: "#1a1a1a", marginBottom: 5 },
-  input: {
+  trigger: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     borderWidth: 1.5,
-    borderColor: COLORS.lightGray,
-    borderRadius: 10,
+    borderColor: "#E8EEFF",
+    borderRadius: 12,
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    backgroundColor: "#F9FAFE",
+    paddingVertical: 13,
+    backgroundColor: "#F4F7FF",
   },
+  triggerOpen: { borderColor: COLORS.blue, backgroundColor: "#EFF5FF" },
   disabled: { opacity: 0.5 },
-  valueText: { fontSize: 15, color: "#1a1a1a", flex: 1 },
-  placeholder: { fontSize: 15, color: COLORS.gray, flex: 1 },
-  arrow: { color: COLORS.gray, fontSize: 12, marginLeft: 8 },
-
-  // Modal layout
-  modalContainer: { flex: 1, justifyContent: "flex-end" },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.45)",
-  },
-  sheet: {
+  valueText: { fontSize: 15, color: "#1a3a5c", flex: 1, fontWeight: "500" },
+  placeholder: { fontSize: 15, color: "#BBC", flex: 1 },
+  backdrop: { ...StyleSheet.absoluteFillObject },
+  list: {
     backgroundColor: "#fff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 30,
-    maxHeight: "65%",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#E8EEFF",
+    maxHeight: 220,
+    elevation: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    overflow: "hidden",
   },
-  sheetHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightGray,
-  },
-  sheetTitle: { fontSize: 16, fontWeight: "700", color: "#1a1a1a" },
-  closeBtn: { padding: 4 },
-  closeBtnText: { fontSize: 18, color: COLORS.gray },
-
-  // Options
+  sep: { height: 1, backgroundColor: "#F0F4FF", marginHorizontal: 12 },
   option: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    paddingVertical: 13,
+    paddingHorizontal: 16,
   },
-  optionSelected: { backgroundColor: "#EEF0FF" },
-  optionPressed: { backgroundColor: "#F0F0F0" },
-  optionText: { fontSize: 15, color: "#1a1a1a", flex: 1 },
-  optionTextSelected: { color: COLORS.blue, fontWeight: "700" },
-  checkmark: { color: COLORS.blue, fontWeight: "700", fontSize: 16 },
-  separator: {
-    height: 1,
-    backgroundColor: COLORS.lightGray,
-    marginHorizontal: 20,
-  },
+  optionActive: { backgroundColor: "#EFF5FF" },
+  optionPressed: { backgroundColor: "#F5F8FF" },
+  optionText: { fontSize: 14, color: "#333", flex: 1 },
+  optionTextActive: { color: COLORS.blue, fontWeight: "700" },
 });

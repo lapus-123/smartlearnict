@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,7 +13,12 @@ import Button from "../components/Button";
 import Input from "../components/Input";
 import PopupModal from "../components/PopupModal";
 import { COLORS } from "../config";
-import { createCollege, getColleges, updateCollege } from "../services/api";
+import {
+  createCollege,
+  deleteCollege,
+  getColleges,
+  updateCollege,
+} from "../services/api";
 
 function TabBar({ active, onChange }) {
   return (
@@ -96,6 +102,33 @@ export default function CollegeManagerScreen({ navigation }) {
     setSavingId(null);
   };
 
+  const handleDelete = (college) => {
+    Alert.alert(
+      "Delete College",
+      `Delete "${college.name}"?\n\nThis will also delete all its courses.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteCollege(college._id);
+              load();
+              show("Deleted", `"${college.name}" deleted.`, "success");
+            } catch (err) {
+              show(
+                "Error",
+                err.response?.data?.message || "Failed to delete.",
+                "error",
+              );
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const show = (title, message, type) =>
     setPopup({ visible: true, title, message, type });
 
@@ -128,12 +161,6 @@ export default function CollegeManagerScreen({ navigation }) {
               onPress={handleCreate}
               loading={loading}
             />
-          </View>
-          <View style={s.notice}>
-            <Text style={s.noticeText}>
-              ℹ️ Colleges cannot be deleted to preserve data integrity. You can
-              rename them.
-            </Text>
           </View>
         </ScrollView>
       ) : (
@@ -172,16 +199,24 @@ export default function CollegeManagerScreen({ navigation }) {
                   </View>
                 ) : (
                   <View style={s.viewRow}>
-                    <Text style={s.rowText}>🏫 {c.name}</Text>
-                    <TouchableOpacity
-                      style={s.editBtn}
-                      onPress={() => {
-                        setEditingId(c._id);
-                        setEditName(c.name);
-                      }}
-                    >
-                      <Text style={s.editBtnText}>Rename</Text>
-                    </TouchableOpacity>
+                    <Text style={s.rowText}>{c.name}</Text>
+                    <View style={{ flexDirection: "row", gap: 8 }}>
+                      <TouchableOpacity
+                        style={s.editBtn}
+                        onPress={() => {
+                          setEditingId(c._id);
+                          setEditName(c.name);
+                        }}
+                      >
+                        <Text style={s.editBtnText}>Rename</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={s.deleteBtn}
+                        onPress={() => handleDelete(c)}
+                      >
+                        <Text style={s.deleteBtnText}>Delete</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 )}
               </View>
@@ -261,6 +296,13 @@ const s = StyleSheet.create({
     paddingVertical: 6,
   },
   editBtnText: { color: COLORS.blue, fontWeight: "700", fontSize: 13 },
+  deleteBtn: {
+    backgroundColor: "#FFE5E5",
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  deleteBtnText: { color: "#E53935", fontWeight: "700", fontSize: 13 },
   editRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   editInput: {
     flex: 1,

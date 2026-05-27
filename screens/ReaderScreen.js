@@ -1,4 +1,5 @@
-import * as FileSystem from "expo-file-system";
+import * as FileSystem from "expo-file-system/legacy";
+import * as IntentLauncher from "expo-intent-launcher";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { VideoView, useVideoPlayer } from "expo-video";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -8,6 +9,7 @@ import {
   Dimensions,
   Image,
   Linking,
+  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -24,10 +26,38 @@ const VIDEO_TYPES = ["mp4", "mov", "webm"];
 const IMAGE_TYPES = ["jpg", "jpeg", "png"];
 const PDF_TYPES = ["pdf"];
 const DOC_TYPES = ["docx", "doc", "ppt", "pptx"];
+const OFFICE_VIEW_TYPES = ["docx", "doc", "ppt", "pptx"];
+const MIME_TYPES = {
+  doc: "application/msword",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ppt: "application/vnd.ms-powerpoint",
+  pptx: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  pdf: "application/pdf",
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  mp4: "video/mp4",
+  mov: "video/quicktime",
+  webm: "video/webm",
+};
 
 const optimizeImageUrl = (url) => {
   if (!url?.includes("cloudinary.com")) return url;
   return url.replace("/upload/", "/upload/q_auto,f_auto,w_800/");
+};
+
+const sanitizeFileName = (name, fallbackExt) => {
+  const base = (name || "material")
+    .replace(/[<>:"/\\|?*\x00-\x1F]/g, "_")
+    .replace(/\s+/g, "_")
+    .slice(0, 90);
+  const hasExt = new RegExp(`\\.${fallbackExt}$`, "i").test(base);
+  return hasExt ? base : `${base}.${fallbackExt}`;
+};
+
+const getDownloadName = (material, fileType) => {
+  const originalName = material.fileName || material.files?.[0]?.fileName;
+  return sanitizeFileName(originalName || material.title, fileType);
 };
 
 const getPdfHtml = (pdfUrl) => `
@@ -69,6 +99,9 @@ pdfjsLib.getDocument({url:'${pdfUrl}',cMapUrl:'https://cdnjs.cloudflare.com/ajax
   render(1);
 }).catch(()=>{document.getElementById('loading').innerHTML='<p style="color:#e53935;padding:20px">Failed to load PDF.</p>';});
 </script></body></html>`;
+
+const getOfficeViewerUrl = (fileUrl) =>
+  `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
 
 export default function ReaderScreen({ route, navigation }) {
   const { material } = route.params;
@@ -200,18 +233,40 @@ export default function ReaderScreen({ route, navigation }) {
         onPress: async () => {
           setDownloading(true);
           try {
-            const filename =
-              material.title.replace(/[^a-zA-Z0-9]/g, "_") + "." + ft;
+            const mimeType = MIME_TYPES[ft] || "application/octet-stream";
+            const filename = getDownloadName(material, ft);
             const localUri = FileSystem.documentDirectory + filename;
             const { uri } = await FileSystem.downloadAsync(
               material.fileUrl,
               localUri,
             );
-            await Linking.openURL(
-              (await Linking.canOpenURL(uri)) ? uri : material.fileUrl,
-            );
+            if (Platform.OS === "android") {
+              const contentUri = await FileSystem.getContentUriAsync(uri);
+              await IntentLauncher.startActivityAsync(
+                "android.intent.action.VIEW",
+                {
+                  data: contentUri,
+                  type: mimeType,
+                  flags: 1,
+                },
+              );
+            } else if (await Linking.canOpenURL(uri)) {
+              await Linking.openURL(uri);
+            } else if (!DOC_TYPES.includes(ft)) {
+              await Linking.openURL(material.fileUrl);
+            } else {
+              Alert.alert(
+                "No app found",
+                "Install Word, PowerPoint, or another document viewer to open this file.",
+              );
+            }
           } catch {
-            Linking.openURL(material.fileUrl);
+            Alert.alert(
+              "Could not open file",
+              DOC_TYPES.includes(ft)
+                ? "The file was downloaded, but no compatible document app could open it."
+                : "Could not download or open this file.",
+            );
           }
           setDownloading(false);
         },
@@ -227,7 +282,10 @@ export default function ReaderScreen({ route, navigation }) {
         >
           <VideoView
             player={player}
-            style={[styles.video, isLandscape && { width, height }]}
+            style={[
+              styles.video,
+              isLandscape && { width: dims.width, height: dims.height },
+            ]}
             allowsFullscreen
             nativeControls
           />
@@ -305,24 +363,43 @@ export default function ReaderScreen({ route, navigation }) {
         </View>
       );
     }
-    if (DOC_TYPES.includes(ft)) {
+    if (OFFICE_VIEW_TYPES.includes(ft)) {
       const iconMap = { docx: "📝", doc: "📝", ppt: "📊", pptx: "📊" };
       return (
-        <View style={styles.docWrap}>
-          <Text style={styles.docIcon}>{iconMap[ft] || "📎"}</Text>
-          <Text style={styles.docTitle}>{material.title}</Text>
-          <Text style={styles.docNote}>
-            This file type must be opened in an external app.
-          </Text>
+        <View style={styles.officeWrap}>
+          {loading && (
+            <View style={styles.loaderBox}>
+              <ActivityIndicator color={COLORS.blue} size="large" />
+              <Text style={styles.loaderText}>Preparing document...</Text>
+            </View>
+          )}
+          <WebView
+            originWhitelist={["*"]}
+            source={{ uri: getOfficeViewerUrl(material.fileUrl) }}
+            style={styles.officeViewer}
+            javaScriptEnabled
+            domStorageEnabled
+            startInLoadingState
+            onLoadEnd={() => {
+              setLoading(false);
+              if (progress < 100) handleProgress(100);
+            }}
+            onError={() => setLoading(false)}
+          />
           <TouchableOpacity
-            style={styles.docBtn}
+            style={styles.officeDownloadBtn}
             onPress={handleDownload}
             disabled={downloading}
           >
             {downloading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.docBtnText}>⬇ Download & Open</Text>
+              <>
+                <Text style={styles.officeDownloadIcon}>
+                  {iconMap[ft] || "📎"}
+                </Text>
+                <Text style={styles.docBtnText}>Open Externally</Text>
+              </>
             )}
           </TouchableOpacity>
         </View>
@@ -476,6 +553,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
   },
   docBtnText: { color: "#fff", fontWeight: "800", fontSize: 15 },
+  officeWrap: { flex: 1, backgroundColor: "#F4F6FF" },
+  officeViewer: { flex: 1, backgroundColor: "#F4F6FF" },
+  officeDownloadBtn: {
+    position: "absolute",
+    right: 16,
+    bottom: 16,
+    backgroundColor: COLORS.blue,
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+  },
+  officeDownloadIcon: { fontSize: 14 },
   landscapeBack: {
     position: "absolute",
     top: 14,

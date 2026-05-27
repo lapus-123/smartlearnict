@@ -105,3 +105,8 @@ export const approveInstructor = (id) =>
   api.put(`/admin/instructor-requests/${id}/approve`);
 export const rejectInstructor = (id) =>
   api.delete(`/admin/instructor-requests/${id}/reject`);
+export const getStudentRequests = () => api.get("/admin/student-requests");
+export const approveStudent = (id) =>
+  api.put(`/admin/student-requests/${id}/approve`);
+export const rejectStudent = (id) =>
+  api.delete(`/admin/student-requests/${id}/reject`);

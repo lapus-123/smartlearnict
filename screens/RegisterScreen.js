@@ -1,7 +1,6 @@
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useRef, useState } from "react";
 import {
-  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -16,44 +15,45 @@ import DatePicker from "../components/DatePicker";
 import Dropdown from "../components/Dropdown";
 import Input from "../components/Input";
 import PopupModal from "../components/PopupModal";
-import { COLORS } from "../config";
 import { useAuth } from "../contexts/AuthContext";
 import { getColleges, getSections } from "../services/api";
 
 const ROLES = [
-  { label: "Student", value: "student", icon: "🎓" },
-  { label: "Instructor / Professor", value: "instructor", icon: "📚" },
+  { label: "Student", value: "student" },
+  { label: "Instructor / Professor", value: "instructor" },
 ];
+
+const SCHOOL_YEARS = ["2023-2024", "2024-2025", "2025-2026", "2026-2027"].map(
+  (y) => ({ label: y, value: y }),
+);
 
 export default function RegisterScreen({ navigation }) {
   const { register } = useAuth();
 
   const [role, setRole] = useState(null);
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [birthdayDate, setBirthdayDate] = useState(null);
+  const [birthdayStr, setBirthdayStr] = useState("");
+  const [schoolYear, setSchoolYear] = useState("");
+  const [studentId, setStudentId] = useState("");
+  const [instructorId, setInstructorId] = useState("");
+  const [collegeId, setCollegeId] = useState("");
+  const [courseId, setCourseId] = useState("");
+  const collegeIdRef = useRef("");
+  const courseIdRef = useRef("");
+
+  const [colleges, setColleges] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [loadingColleges, setLoadingColleges] = useState(false);
+  const [loadingCourses, setLoadingCourses] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [collegeError, setCollegeError] = useState(false);
   const [popup, setPopup] = useState({
     visible: false,
     title: "",
     message: "",
     type: "success",
   });
-
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [birthday, setBirthday] = useState(null);
-  const [birthdayStr, setBirthdayStr] = useState("");
-  const [schoolYear, setSchoolYear] = useState("");
-  const [studentId, setStudentId] = useState("");
-  const [instructorId, setInstructorId] = useState("");
-  const [section, setSection] = useState("");
-  const [collegeId, setCollegeId] = useState("");
-  const [courseId, setCourseId] = useState("");
-  const collegeIdRef = useRef("");
-  const courseIdRef = useRef("");
-  const [colleges, setColleges] = useState([]);
-  const [courses, setCourses] = useState([]);
-  const [loadingColleges, setLoadingColleges] = useState(false);
-  const [loadingCourses, setLoadingCourses] = useState(false);
 
   useEffect(() => {
     collegeIdRef.current = collegeId;
@@ -62,21 +62,16 @@ export default function RegisterScreen({ navigation }) {
     courseIdRef.current = courseId;
   }, [courseId]);
 
-  const loadColleges = () => {
+  useEffect(() => {
     setLoadingColleges(true);
-    setCollegeError(false);
     getColleges()
-      .then((res) =>
+      .then((r) =>
         setColleges(
-          res.data.colleges.map((c) => ({ label: c.name, value: c._id })),
+          r.data.colleges.map((c) => ({ label: c.name, value: c._id })),
         ),
       )
-      .catch(() => setCollegeError(true))
+      .catch(() => {})
       .finally(() => setLoadingColleges(false));
-  };
-
-  useEffect(() => {
-    loadColleges();
   }, []);
 
   useEffect(() => {
@@ -90,108 +85,43 @@ export default function RegisterScreen({ navigation }) {
     setCourseId("");
     courseIdRef.current = "";
     getSections(collegeId)
-      .then((res) =>
+      .then((r) =>
         setCourses(
-          res.data.sections.map((s) => ({ label: s.name, value: s._id })),
+          r.data.sections.map((s) => ({ label: s.name, value: s._id })),
         ),
       )
       .catch(() => setCourses([]))
       .finally(() => setLoadingCourses(false));
   }, [collegeId]);
 
-  const handleCollegeChange = (val) => {
-    collegeIdRef.current = val;
-    setCollegeId(val);
-  };
-  const handleCourseChange = (val) => {
-    courseIdRef.current = val;
-    setCourseId(val);
-  };
+  const err = (title, message) =>
+    setPopup({ visible: true, title, message, type: "error" });
 
   const handleRegister = async () => {
     const cId = collegeIdRef.current;
     const crId = courseIdRef.current;
 
     if (!role)
-      return setPopup({
-        visible: true,
-        title: "Select Role",
-        message: "Please select Student or Instructor.",
-        type: "error",
-      });
+      return err("Select Role", "Please select Student or Instructor.");
     if (!fullName.trim())
-      return setPopup({
-        visible: true,
-        title: "Missing Fields",
-        message: "Please enter your full name.",
-        type: "error",
-      });
+      return err("Missing Fields", "Please enter your full name.");
     if (!email.trim())
-      return setPopup({
-        visible: true,
-        title: "Missing Fields",
-        message: "Please enter your email address.",
-        type: "error",
-      });
+      return err("Missing Fields", "Please enter your email address.");
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()))
-      return setPopup({
-        visible: true,
-        title: "Invalid Email",
-        message: "Please enter a valid email address.",
-        type: "error",
-      });
+      return err("Invalid Email", "Please enter a valid email address.");
     if (!birthdayStr)
-      return setPopup({
-        visible: true,
-        title: "Missing Fields",
-        message: "Please select your birthday.",
-        type: "error",
-      });
-    if (!cId)
-      return setPopup({
-        visible: true,
-        title: "Missing Fields",
-        message: "Please select a College.",
-        type: "error",
-      });
-    if (!schoolYear.trim())
-      return setPopup({
-        visible: true,
-        title: "Missing Fields",
-        message: "Please enter School Year (e.g. 2024-2025).",
-        type: "error",
-      });
-
+      return err("Missing Fields", "Please select your birthday.");
+    if (!cId) return err("Missing Fields", "Please select your College.");
+    if (!schoolYear)
+      return err("Missing Fields", "Please select your School Year.");
     if (role === "student") {
       if (!studentId.trim())
-        return setPopup({
-          visible: true,
-          title: "Missing Fields",
-          message: "Please enter your Student ID.",
-          type: "error",
-        });
+        return err("Missing Fields", "Please enter your Student ID.");
       if (!crId)
-        return setPopup({
-          visible: true,
-          title: "Missing Fields",
-          message: "Please select a Course (e.g. BSIT).",
-          type: "error",
-        });
-      if (!section.trim())
-        return setPopup({
-          visible: true,
-          title: "Missing Fields",
-          message: "Please enter your Section (e.g. 4A).",
-          type: "error",
-        });
+        return err("Missing Fields", "Please select your Course (e.g. BSIT).");
     }
     if (role === "instructor" && !instructorId.trim())
-      return setPopup({
-        visible: true,
-        title: "Missing Fields",
-        message: "Please enter your Instructor ID.",
-        type: "error",
-      });
+      return err("Missing Fields", "Please enter your Instructor ID.");
 
     const payload = {
       role,
@@ -199,13 +129,9 @@ export default function RegisterScreen({ navigation }) {
       email: email.trim().toLowerCase(),
       birthday: birthdayStr,
       collegeId: cId,
-      schoolYear: schoolYear.trim(),
+      schoolYear,
       ...(role === "student"
-        ? {
-            studentId: studentId.trim(),
-            courseId: crId,
-            section: section.trim(),
-          }
+        ? { studentId: studentId.trim(), courseId: crId }
         : { instructorId: instructorId.trim() }),
     };
 
@@ -221,17 +147,17 @@ export default function RegisterScreen({ navigation }) {
         type: "error",
       });
     } else {
-      const msg = result.pending
-        ? "Your account has been submitted for Admin approval. You will be able to log in once approved."
-        : result.hint || "Account created! You can now log in.";
       setPopup({
         visible: true,
-        title: result.pending ? "⏳ Pending Approval" : "✅ Registered!",
-        message: msg,
+        title: "Pending Approval",
+        message:
+          "Your account has been submitted. You can log in once the Admin approves your account.",
         type: "success",
       });
     }
   };
+
+  const isLocked = !role;
 
   return (
     <LinearGradient
@@ -250,160 +176,127 @@ export default function RegisterScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Logo */}
-          <View style={s.logoArea}>
-            <View style={s.logoShadow}>
-              <Image
-                source={require("../assets/logo.png")}
-                style={s.logoImg}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={s.appName}>SmartLearnICT</Text>
-            <Text style={s.tagline}>Create your account</Text>
+          <View style={s.header}>
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={s.backBtn}
+            >
+              <Text style={s.backText}>← Back to Login</Text>
+            </TouchableOpacity>
+            <Text style={s.title}>Create Account</Text>
+            <Text style={s.sub}>Register as a student or instructor</Text>
           </View>
 
-          {/* Card */}
           <View style={s.card}>
             {/* Role selector */}
-            <SectionHeader label="I am a..." />
+            <Text style={s.label}>REGISTER AS</Text>
             <View style={s.roleRow}>
               {ROLES.map((r) => (
                 <TouchableOpacity
                   key={r.value}
                   style={[s.roleBtn, role === r.value && s.roleBtnActive]}
                   onPress={() => setRole(r.value)}
-                  activeOpacity={0.8}
                 >
-                  <Text style={s.roleIcon}>{r.icon}</Text>
                   <Text
-                    style={[s.roleLabel, role === r.value && s.roleLabelActive]}
+                    style={[s.roleTxt, role === r.value && s.roleTxtActive]}
                   >
                     {r.label}
                   </Text>
-                  {role === r.value && (
-                    <View style={s.roleCheck}>
-                      <Text style={s.roleCheckText}>✓</Text>
-                    </View>
-                  )}
                 </TouchableOpacity>
               ))}
             </View>
 
-            {/* Lock overlay prompt — shown when no role selected */}
-            {!role && (
+            {/* Lock overlay until role selected */}
+            {isLocked ? (
               <View style={s.lockBox}>
-                <Text style={s.lockIcon}>☝️</Text>
-                <Text style={s.lockTitle}>Select your role above</Text>
-                <Text style={s.lockSub}>
-                  Choose Student or Instructor to continue filling out the form.
+                <Text style={s.lockText}>
+                  Please select a role above to continue
                 </Text>
               </View>
-            )}
-
-            {/* All form fields — only shown after role is picked */}
-            {!!role && (
+            ) : (
               <>
-                {/* Personal info */}
-                <SectionHeader label="Personal Information" />
+                <Text style={s.label}>FULL NAME</Text>
                 <Input
-                  label="Full Name"
-                  placeholder="Juan Dela Cruz"
+                  placeholder="Juan dela Cruz"
                   value={fullName}
                   onChangeText={setFullName}
                 />
+
+                <Text style={s.label}>EMAIL ADDRESS</Text>
                 <Input
-                  label="Email Address"
-                  placeholder="e.g. juan@email.com"
+                  placeholder="your@email.com"
                   value={email}
                   onChangeText={setEmail}
-                  keyboardType="email-address"
                   autoCapitalize="none"
-                  autoCorrect={false}
+                  keyboardType="email-address"
                 />
+
+                <Text style={s.label}>BIRTHDAY</Text>
                 <DatePicker
-                  label="Birthday"
-                  value={birthday}
-                  onChange={(obj, str) => {
-                    setBirthday(obj);
-                    setBirthdayStr(str);
+                  value={birthdayDate}
+                  onChange={(dateObj, dateStr) => {
+                    setBirthdayDate(dateObj);
+                    setBirthdayStr(dateStr);
                   }}
                 />
+                <Text style={s.hint}>
+                  Your username will be your birth month + day (e.g. 0123 = Jan
+                  23)
+                </Text>
 
-                {/* Academic info */}
-                <SectionHeader label="Academic Info" />
-                {collegeError ? (
-                  <View style={s.retryBox}>
-                    <Text style={s.retryText}>⚠️ Failed to load colleges.</Text>
-                    <TouchableOpacity style={s.retryBtn} onPress={loadColleges}>
-                      <Text style={s.retryBtnText}>Tap to Retry</Text>
-                    </TouchableOpacity>
-                    <Text style={s.retryHint}>
-                      Make sure the backend is running and your IP in config.js
-                      is correct.
-                    </Text>
-                  </View>
-                ) : (
-                  <Dropdown
-                    label="College / Department"
-                    placeholder={
-                      loadingColleges ? "Loading colleges..." : "Select College"
-                    }
-                    options={colleges}
-                    value={collegeId}
-                    onChange={handleCollegeChange}
-                    disabled={loadingColleges}
-                  />
-                )}
-                <Input
-                  label="School Year"
-                  placeholder="e.g. 2024-2025"
-                  value={schoolYear}
-                  onChangeText={setSchoolYear}
+                <Text style={s.label}>COLLEGE</Text>
+                <Dropdown
+                  value={collegeId}
+                  onChange={(val) => {
+                    collegeIdRef.current = val;
+                    setCollegeId(val);
+                  }}
+                  options={colleges}
+                  placeholder={
+                    loadingColleges ? "Loading colleges..." : "Select College"
+                  }
                 />
 
-                {/* Student fields */}
+                <Text style={s.label}>SCHOOL YEAR</Text>
+                <Dropdown
+                  value={schoolYear}
+                  onChange={setSchoolYear}
+                  options={SCHOOL_YEARS}
+                  placeholder="Select School Year"
+                />
+
                 {role === "student" && (
                   <>
-                    <SectionHeader label="Student Details" />
-                    <Input
-                      label="Student ID "
-                      placeholder="e.g. 2021-00123"
-                      value={studentId}
-                      onChangeText={setStudentId}
-                    />
+                    <Text style={s.label}>COURSE & SECTION</Text>
                     <Dropdown
-                      label="Course (e.g. BSIT, BSCS)"
+                      value={courseId}
+                      onChange={(val) => {
+                        courseIdRef.current = val;
+                        setCourseId(val);
+                      }}
+                      options={courses}
                       placeholder={
                         !collegeId
                           ? "Select a college first"
                           : loadingCourses
                             ? "Loading courses..."
-                            : courses.length === 0
-                              ? "No courses found"
-                              : "Select Course"
+                            : "Select Course"
                       }
-                      options={courses}
-                      value={courseId}
-                      onChange={handleCourseChange}
-                      disabled={!collegeId || loadingCourses}
                     />
+
+                    <Text style={s.label}>STUDENT ID</Text>
                     <Input
-                      label="Section (e.g. 4A, 3B)"
-                      placeholder="e.g. 4A"
-                      value={section}
-                      onChangeText={setSection}
-                      autoCapitalize="characters"
+                      placeholder="e.g. 2021-00123"
+                      value={studentId}
+                      onChangeText={setStudentId}
                     />
                   </>
                 )}
 
-                {/* Instructor fields */}
                 {role === "instructor" && (
                   <>
-                    <SectionHeader label="Instructor Details" />
+                    <Text style={s.label}>INSTRUCTOR ID</Text>
                     <Input
-                      label="Instructor ID "
                       placeholder="e.g. INS-2021-001"
                       value={instructorId}
                       onChangeText={setInstructorId}
@@ -411,42 +304,20 @@ export default function RegisterScreen({ navigation }) {
                   </>
                 )}
 
-                {/* Hint */}
-                <View style={s.hintBox}>
-                  <Text style={s.hintIcon}>💡</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={s.hintText}>
-                      Username = MMDD from your birthday
-                    </Text>
-                    <Text style={s.hintText}>
-                      Password = your{" "}
-                      {role === "student" ? "Student ID" : "Instructor ID"}
-                    </Text>
-                  </View>
+                <View style={s.pendingNote}>
+                  <Text style={s.pendingText}>
+                    ⏳ All accounts require Admin approval before logging in.
+                  </Text>
                 </View>
+
+                <Button
+                  title="Create Account"
+                  onPress={handleRegister}
+                  loading={loading}
+                />
               </>
             )}
-
-            <Button
-              title="Register"
-              onPress={handleRegister}
-              loading={loading}
-              style={{ marginTop: 12 }}
-              disabled={!role}
-            />
-
-            <TouchableOpacity
-              onPress={() => navigation.navigate("Login")}
-              style={s.loginRow}
-            >
-              <Text style={s.loginText}>
-                Already have an account?{" "}
-                <Text style={s.loginBold}>Sign In</Text>
-              </Text>
-            </TouchableOpacity>
           </View>
-
-          <View style={{ height: 24 }} />
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -464,171 +335,63 @@ export default function RegisterScreen({ navigation }) {
   );
 }
 
-const SectionHeader = ({ label }) => (
-  <View style={s.sectionHeader}>
-    <View style={s.sectionLine} />
-    <Text style={s.sectionLabel}>{label}</Text>
-    <View style={s.sectionLine} />
-  </View>
-);
-
 const s = StyleSheet.create({
   flex: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 52,
-    paddingBottom: 40,
-  },
-
-  // Logo
-  logoArea: { alignItems: "center", marginBottom: 28 },
-  logoShadow: {
-    elevation: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
-    borderRadius: 35,
-    marginBottom: 12,
-  },
-  logoImg: {
-    width: 100,
-    height: 100,
-    backgroundColor: "#ffffff",
-    borderRadius: 35,
-  },
-  appName: {
-    fontSize: 24,
-    fontWeight: "900",
-    color: "#1a3a5c",
-    letterSpacing: 0.5,
-  },
-  tagline: { fontSize: 13, color: "rgba(26,58,92,0.65)", marginTop: 4 },
-
-  // Card
+  scroll: { paddingHorizontal: 24, paddingVertical: 36 },
+  header: { marginBottom: 20 },
+  backBtn: { marginBottom: 12 },
+  backText: { color: "#1a3a5c", fontWeight: "700", fontSize: 14 },
+  title: { fontSize: 28, fontWeight: "900", color: "#1a3a5c" },
+  sub: { fontSize: 14, color: "rgba(26,58,92,0.6)", marginTop: 4 },
   card: {
-    backgroundColor: "rgba(255,255,255,0.95)",
-    borderRadius: 28,
+    backgroundColor: "#fff",
+    borderRadius: 24,
     padding: 24,
-    elevation: 10,
+    elevation: 12,
     shadowColor: "#000",
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.1,
     shadowRadius: 20,
   },
-
-  // Section header
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 16,
-    marginBottom: 12,
+  label: {
+    fontSize: 10,
+    fontWeight: "900",
+    color: "#4D8FD9",
+    letterSpacing: 1.2,
+    marginBottom: 6,
+    marginTop: 14,
   },
-  sectionLine: { flex: 1, height: 1, backgroundColor: "#EAEEF8" },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: "800",
-    color: "#1a3a5c",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-
-  // Role
-  roleRow: { flexDirection: "row", gap: 12, marginBottom: 4 },
+  hint: { fontSize: 11, color: "#aaa", marginTop: 4, marginBottom: 2 },
+  roleRow: { flexDirection: "row", gap: 10, marginBottom: 4 },
   roleBtn: {
     flex: 1,
-    borderWidth: 2,
-    borderColor: "#E0E4F0",
-    borderRadius: 16,
-    padding: 16,
+    borderWidth: 1.5,
+    borderColor: "#ddd",
+    borderRadius: 12,
+    paddingVertical: 12,
     alignItems: "center",
-    backgroundColor: "#F8FAFF",
-    position: "relative",
   },
-  roleBtnActive: { borderColor: COLORS.blue, backgroundColor: "#EEF2FF" },
-  roleIcon: { fontSize: 28, marginBottom: 6 },
-  roleLabel: {
+  roleBtnActive: { backgroundColor: "#1a3a5c", borderColor: "#1a3a5c" },
+  roleTxt: { fontSize: 13, fontWeight: "700", color: "#666" },
+  roleTxtActive: { color: "#fff" },
+  lockBox: {
+    backgroundColor: "#f5f8ff",
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+    marginTop: 10,
+  },
+  lockText: { color: "#aaa", fontSize: 14, textAlign: "center" },
+  pendingNote: {
+    backgroundColor: "#FFF8E1",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 16,
+    marginBottom: 4,
+  },
+  pendingText: {
     fontSize: 12,
+    color: "#E65100",
     fontWeight: "600",
-    color: "#999",
     textAlign: "center",
   },
-  roleLabelActive: { color: COLORS.blue, fontWeight: "800" },
-  roleCheck: {
-    position: "absolute",
-    top: 8,
-    right: 8,
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: COLORS.blue,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  roleCheckText: { color: "#fff", fontSize: 10, fontWeight: "900" },
-
-  // Hint
-  hintBox: {
-    flexDirection: "row",
-    gap: 10,
-    backgroundColor: "#FFFBEB",
-    borderRadius: 12,
-    padding: 12,
-    marginTop: 12,
-    borderLeftWidth: 3,
-    borderLeftColor: "#F59E0B",
-  },
-  hintIcon: { fontSize: 16 },
-  hintText: { fontSize: 12, color: "#92400E", lineHeight: 19 },
-
-  // Retry
-  retryBox: {
-    borderWidth: 1.5,
-    borderColor: "#FFCC00",
-    backgroundColor: "#FFFDE6",
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 12,
-    alignItems: "center",
-  },
-  retryText: {
-    fontSize: 13,
-    color: "#856404",
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  retryBtn: {
-    backgroundColor: COLORS.blue,
-    borderRadius: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-  },
-  retryBtnText: { color: "#fff", fontWeight: "700", fontSize: 13 },
-  retryHint: { fontSize: 11, color: "#999", marginTop: 8, textAlign: "center" },
-
-  loginRow: { alignItems: "center", marginTop: 16 },
-  loginText: { color: "#999", fontSize: 14 },
-  loginBold: { color: COLORS.blue, fontWeight: "800" },
-
-  lockBox: {
-    alignItems: "center",
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    backgroundColor: "#F8FAFF",
-    borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: "#E0E4F0",
-    borderStyle: "dashed",
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  lockIcon: { fontSize: 32, marginBottom: 8 },
-  lockTitle: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: "#1a3a5c",
-    marginBottom: 4,
-  },
-  lockSub: { fontSize: 13, color: "#999", textAlign: "center", lineHeight: 19 },
 });

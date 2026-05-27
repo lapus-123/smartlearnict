@@ -13,7 +13,7 @@ import {
 import Svg, { Circle, Path, Rect } from "react-native-svg";
 import { ChevronRight, LogoutIcon } from "../components/Icons";
 import { useAuth } from "../contexts/AuthContext";
-import { getInstructorRequests } from "../services/api";
+import { getInstructorRequests, getStudentRequests } from "../services/api";
 
 // ── Inline SVG icons for admin cards ─────────────────────────────────────────
 const ShieldIcon = () => (
@@ -186,8 +186,10 @@ export default function AdminDashboard({ navigation }) {
 
   useFocusEffect(
     useCallback(() => {
-      getInstructorRequests()
-        .then((r) => setPendingCount(r.data.instructors.length))
+      Promise.all([getInstructorRequests(), getStudentRequests()])
+        .then(([ir, sr]) =>
+          setPendingCount(ir.data.instructors.length + sr.data.students.length),
+        )
         .catch(() => {});
     }, []),
   );
