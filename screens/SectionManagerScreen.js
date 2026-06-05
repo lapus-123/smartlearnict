@@ -23,16 +23,16 @@ function TabBar({ active, onChange }) {
   return (
     <View style={s.tabBar}>
       {[
-        { key: "add", label: "➕  Add Course" },
-        { key: "list", label: "📋  Course List" },
-      ].map((t) => (
+        { key: "add", label: "Add Program" },
+        { key: "list", label: "Curriculum List" },
+      ].map((tab) => (
         <TouchableOpacity
-          key={t.key}
-          style={[s.tab, active === t.key && s.tabActive]}
-          onPress={() => onChange(t.key)}
+          key={tab.key}
+          style={[s.tab, active === tab.key && s.tabActive]}
+          onPress={() => onChange(tab.key)}
         >
-          <Text style={[s.tabText, active === t.key && s.tabTextActive]}>
-            {t.label}
+          <Text style={[s.tabText, active === tab.key && s.tabTextActive]}>
+            {tab.label}
           </Text>
         </TouchableOpacity>
       ))}
@@ -42,11 +42,11 @@ function TabBar({ active, onChange }) {
 
 export default function SectionManagerScreen({ navigation }) {
   const [tab, setTab] = useState("add");
-  const [colleges, setColleges] = useState([]);
-  const [allCourses, setAllCourses] = useState([]); // for list tab (all colleges)
+  const [departments, setDepartments] = useState([]);
+  const [allPrograms, setAllPrograms] = useState([]);
   const [name, setName] = useState("");
-  const [selectedCollegeId, setSelectedCollegeId] = useState("");
-  const [filterCollegeId, setFilterCollegeId] = useState("");
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
+  const [filterDepartmentId, setFilterDepartmentId] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [popup, setPopup] = useState({
@@ -56,98 +56,90 @@ export default function SectionManagerScreen({ navigation }) {
     type: "success",
   });
 
-  useEffect(() => {
-    getColleges()
-      .then((r) => {
-        const cols = r.data.colleges;
-        setColleges(cols.map((c) => ({ label: c.name, value: c._id })));
-        // Load all courses from all colleges for list tab
-        Promise.all(
-          cols.map((c) =>
-            getSections(c._id).then((res) =>
-              res.data.sections.map((sec) => ({
-                ...sec,
-                collegeName: c.name,
-                collegeId: c._id,
-              })),
-            ),
-          ),
-        )
-          .then((all) => setAllCourses(all.flat()))
-          .catch(() => {});
-      })
-      .catch(() => {});
-  }, []);
+  const show = (title, message, type) =>
+    setPopup({ visible: true, title, message, type });
 
-  const reloadAllCourses = () => {
+  const loadPrograms = async () => {
     setFetching(true);
-    getColleges()
-      .then((r) => {
-        Promise.all(
-          r.data.colleges.map((c) =>
-            getSections(c._id).then((res) =>
-              res.data.sections.map((sec) => ({
-                ...sec,
-                collegeName: c.name,
-                collegeId: c._id,
-              })),
-            ),
+    try {
+      const res = await getColleges();
+      const departmentsList = res.data.colleges || [];
+      setDepartments(
+        departmentsList.map((item) => ({ label: item.name, value: item._id })),
+      );
+
+      const programGroups = await Promise.all(
+        departmentsList.map((department) =>
+          getSections(department._id).then((sectionRes) =>
+            (sectionRes.data.sections || []).map((program) => ({
+              ...program,
+              departmentName: department.name,
+              departmentId: department._id,
+            })),
           ),
-        )
-          .then((all) => {
-            setAllCourses(all.flat());
-            setFetching(false);
-          })
-          .catch(() => setFetching(false));
-      })
-      .catch(() => setFetching(false));
+        ),
+      );
+      setAllPrograms(programGroups.flat());
+    } catch {
+      setAllPrograms([]);
+    } finally {
+      setFetching(false);
+    }
   };
 
+  useEffect(() => {
+    loadPrograms();
+  }, []);
+
   const handleCreate = async () => {
-    if (!name.trim() || !selectedCollegeId)
+    const cleanName = name.trim();
+    if (!cleanName || !selectedDepartmentId) {
       return show(
         "Missing",
-        "Select a college and enter a course name.",
+        "Select a department and enter a program name.",
         "error",
       );
+    }
+
     setLoading(true);
     try {
-      await createSection({ name, collegeId: selectedCollegeId });
+      await createSection({ name: cleanName, collegeId: selectedDepartmentId });
       setName("");
-      show("Created", `"${name}" added.`, "success");
-      reloadAllCourses();
+      show("Created", `"${cleanName}" added.`, "success");
+      await loadPrograms();
       setTab("list");
     } catch (err) {
       show("Error", err.response?.data?.message || "Failed.", "error");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const handleDelete = async (id, courseName) => {
+  const handleDelete = async (id, programName) => {
     try {
       await deleteSection(id);
-      show("Deleted", `"${courseName}" removed.`, "success");
-      reloadAllCourses();
+      show("Deleted", `"${programName}" removed.`, "success");
+      await loadPrograms();
     } catch {
       show("Error", "Failed to delete.", "error");
     }
   };
 
-  const show = (title, message, type) =>
-    setPopup({ visible: true, title, message, type });
-
-  const allCollegeOptions = [{ label: "All Colleges", value: "" }, ...colleges];
-  const filtered = filterCollegeId
-    ? allCourses.filter((c) => c.collegeId === filterCollegeId)
-    : allCourses;
+  const departmentFilterOptions = [
+    { label: "All Departments", value: "" },
+    ...departments,
+  ];
+  const filtered = filterDepartmentId
+    ? allPrograms.filter((program) => program.departmentId === filterDepartmentId)
+    : allPrograms;
 
   return (
     <View style={s.container}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.back}>
-          <Text style={s.backText}>←</Text>
+          <Text style={s.backText}>{"<"}</Text>
         </TouchableOpacity>
-        <Text style={s.title}>Manage Courses</Text>
+        <Text style={s.title}>Course and Curriculum Management</Text>
       </View>
 
       <TabBar active={tab} onChange={setTab} />
@@ -158,26 +150,26 @@ export default function SectionManagerScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
         >
           <View style={s.card}>
-            <Text style={s.cardTitle}>New Course</Text>
+            <Text style={s.cardTitle}>New Academic Program</Text>
             <Text style={s.cardSub}>
-              Create course programs under each college (e.g. BSIT, BSCS)
+              Assign programs or curricula to the correct department.
             </Text>
             <Dropdown
-              label="Select College"
-              placeholder="Choose a college"
-              options={colleges}
-              value={selectedCollegeId}
-              onChange={setSelectedCollegeId}
+              label="Department"
+              placeholder="Choose a department"
+              options={departments}
+              value={selectedDepartmentId}
+              onChange={setSelectedDepartmentId}
             />
             <Input
-              label="Course Name"
+              label="Program or Curriculum Name"
               placeholder="e.g. BSIT"
               value={name}
               onChangeText={setName}
               autoCapitalize="characters"
             />
             <Button
-              title="Add Course"
+              title="Add Program"
               onPress={handleCreate}
               loading={loading}
             />
@@ -185,33 +177,14 @@ export default function SectionManagerScreen({ navigation }) {
         </ScrollView>
       ) : (
         <View style={{ flex: 1 }}>
-          {/* College filter — tab bar style */}
-          <View style={s.filterTabBar}>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={s.filterTabContent}
-            >
-              {allCollegeOptions.map((opt) => (
-                <TouchableOpacity
-                  key={opt.value}
-                  style={[
-                    s.filterTab,
-                    filterCollegeId === opt.value && s.filterTabActive,
-                  ]}
-                  onPress={() => setFilterCollegeId(opt.value)}
-                >
-                  <Text
-                    style={[
-                      s.filterTabText,
-                      filterCollegeId === opt.value && s.filterTabTextActive,
-                    ]}
-                  >
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+          <View style={s.filterWrap}>
+            <Dropdown
+              label="Department Filter"
+              placeholder="All Departments"
+              options={departmentFilterOptions}
+              value={filterDepartmentId}
+              onChange={setFilterDepartmentId}
+            />
           </View>
 
           {fetching ? (
@@ -219,20 +192,21 @@ export default function SectionManagerScreen({ navigation }) {
           ) : (
             <ScrollView contentContainerStyle={s.body}>
               <Text style={s.countLabel}>
-                {filtered.length} course{filtered.length !== 1 ? "s" : ""}
+                {filtered.length} program{filtered.length !== 1 ? "s" : ""}
               </Text>
               {filtered.length === 0 ? (
-                <Text style={s.empty}>No courses found.</Text>
+                <Text style={s.empty}>No programs found.</Text>
               ) : (
-                filtered.map((c) => (
-                  <View key={c._id} style={s.row}>
+                filtered.map((program) => (
+                  <View key={program._id} style={s.row}>
                     <View style={{ flex: 1 }}>
-                      <Text style={s.rowName}>{c.name}</Text>
-                      <Text style={s.rowMeta}>🏫 {c.collegeName}</Text>
+                      <Text style={s.rowName}>{program.name}</Text>
+                      <Text style={s.rowMeta}>{program.departmentName}</Text>
+                      <Text style={s.statusText}>Active</Text>
                     </View>
                     <TouchableOpacity
                       style={s.deleteBtn}
-                      onPress={() => handleDelete(c._id, c.name)}
+                      onPress={() => handleDelete(program._id, program.name)}
                     >
                       <Text style={s.deleteBtnText}>Delete</Text>
                     </TouchableOpacity>
@@ -260,15 +234,21 @@ const s = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#7B2FBE",
+    backgroundColor: "#5B2FBE",
     paddingTop: 52,
     paddingBottom: 16,
     paddingHorizontal: 16,
     gap: 12,
   },
-  back: { padding: 4 },
-  backText: { color: "#fff", fontSize: 22, fontWeight: "700" },
-  title: { color: "#fff", fontSize: 18, fontWeight: "800" },
+  back: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backText: { color: "#fff", fontSize: 22, fontWeight: "900" },
+  title: { color: "#fff", fontSize: 17, fontWeight: "800", flex: 1 },
   tabBar: {
     flexDirection: "row",
     backgroundColor: "#fff",
@@ -276,13 +256,13 @@ const s = StyleSheet.create({
     borderBottomColor: "#E0E4FF",
   },
   tab: { flex: 1, paddingVertical: 14, alignItems: "center" },
-  tabActive: { borderBottomWidth: 3, borderBottomColor: "#7B2FBE" },
-  tabText: { fontSize: 13, fontWeight: "600", color: "#aaa" },
-  tabTextActive: { color: "#7B2FBE", fontWeight: "800" },
+  tabActive: { borderBottomWidth: 3, borderBottomColor: "#5B2FBE" },
+  tabText: { fontSize: 13, fontWeight: "600", color: "#8E99AA" },
+  tabTextActive: { color: "#5B2FBE", fontWeight: "800" },
   body: { padding: 20, paddingBottom: 40 },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 8,
     padding: 18,
     elevation: 2,
   },
@@ -292,32 +272,24 @@ const s = StyleSheet.create({
     color: "#1a3a5c",
     marginBottom: 4,
   },
-  cardSub: { fontSize: 12, color: "#aaa", marginBottom: 16 },
-  filterTabBar: {
+  cardSub: { fontSize: 12, color: "#6B7280", marginBottom: 16 },
+  filterWrap: {
     backgroundColor: "#fff",
+    paddingHorizontal: 20,
+    paddingTop: 14,
     borderBottomWidth: 1,
     borderBottomColor: "#E0E4FF",
   },
-  filterTabContent: { paddingHorizontal: 4 },
-  filterTab: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 3,
-    borderBottomColor: "transparent",
-  },
-  filterTabActive: { borderBottomColor: "#7B2FBE" },
-  filterTabText: { fontSize: 13, fontWeight: "600", color: "#aaa" },
-  filterTabTextActive: { color: "#7B2FBE", fontWeight: "800" },
   countLabel: {
     fontSize: 12,
-    fontWeight: "700",
-    color: "#aaa",
+    fontWeight: "800",
+    color: "#6B7280",
     marginBottom: 12,
     textTransform: "uppercase",
   },
   row: {
     backgroundColor: "#fff",
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 14,
     marginBottom: 10,
     flexDirection: "row",
@@ -325,14 +297,26 @@ const s = StyleSheet.create({
     elevation: 1,
     gap: 10,
   },
-  rowName: { fontSize: 14, fontWeight: "700", color: "#1a3a5c" },
-  rowMeta: { fontSize: 12, color: "#aaa", marginTop: 2 },
+  rowName: { fontSize: 14, fontWeight: "800", color: "#1a3a5c" },
+  rowMeta: { fontSize: 12, color: "#6B7280", marginTop: 3 },
+  statusText: {
+    alignSelf: "flex-start",
+    marginTop: 8,
+    borderRadius: 999,
+    backgroundColor: "#E5F8EF",
+    color: "#1F7A4D",
+    overflow: "hidden",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    fontSize: 11,
+    fontWeight: "900",
+  },
   deleteBtn: {
     backgroundColor: "#FFE5E5",
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
-  deleteBtnText: { color: "#E53935", fontWeight: "700", fontSize: 13 },
-  empty: { color: "#aaa", textAlign: "center", marginTop: 30, fontSize: 14 },
+  deleteBtnText: { color: "#E53935", fontWeight: "800", fontSize: 13 },
+  empty: { color: "#8E99AA", textAlign: "center", marginTop: 30, fontSize: 14 },
 });

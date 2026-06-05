@@ -1,138 +1,245 @@
+import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
-  Keyboard,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
-import Button from "../components/Button";
 import Dropdown from "../components/Dropdown";
 import { DeleteIcon, EditIcon, SearchIcon } from "../components/Icons";
-import Input from "../components/Input";
 import PopupModal from "../components/PopupModal";
 import { COLORS } from "../config";
 import {
   deleteUser,
   getAdminInstructors,
   getAdminStudents,
+  getAdminUsers,
   getColleges,
-  getSections,
 } from "../services/api";
 
+const roleOptions = [
+  { label: "All Roles", value: "" },
+  { label: "Students", value: "student" },
+  { label: "Instructors", value: "instructor" },
+];
+
+const statusOptions = [
+  { label: "All Statuses", value: "" },
+  { label: "Active", value: "active" },
+  { label: "Pending", value: "pending" },
+  { label: "Inactive", value: "inactive" },
+  { label: "Suspended", value: "suspended" },
+];
+
+const sortOptions = [
+  { label: "Newest Created", value: "createdAt" },
+  { label: "Full Name", value: "fullName" },
+  { label: "Username", value: "username" },
+  { label: "Role", value: "role" },
+  { label: "Status", value: "status" },
+];
+
+const formatDate = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString();
+};
+
+const getUserId = (user) =>
+  user.studentId || user.instructorId || user.username || user._id;
+
+const getDepartmentId = (user) => user.collegeId?._id || user.collegeId || "";
+
+const buildSummary = (items) => ({
+  totalStudents: items.filter((user) => user.role === "student").length,
+  totalInstructors: items.filter((user) => user.role === "instructor").length,
+  activeUsers: items.filter((user) => (user.status || "active") === "active")
+    .length,
+});
+
+const filterAndPageUsers = ({
+  allUsers,
+  search,
+  role,
+  status,
+  departmentId,
+  sort,
+  page,
+  limit,
+}) => {
+  const q = search.trim().toLowerCase();
+  const filtered = allUsers.filter((user) => {
+    const searchable = [
+      user.fullName,
+      user.username,
+      user.email,
+      user.studentId,
+      user.instructorId,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    const matchesSearch = !q || searchable.includes(q);
+    const matchesRole = !role || user.role === role;
+    const matchesStatus = !status || (user.status || "active") === status;
+    const matchesDepartment =
+      !departmentId || getDepartmentId(user) === departmentId;
+
+    return matchesSearch && matchesRole && matchesStatus && matchesDepartment;
+  });
+
+  filtered.sort((a, b) => {
+    if (sort === "createdAt") {
+      return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+    }
+    const left = String(a[sort] || "").toLowerCase();
+    const right = String(b[sort] || "").toLowerCase();
+    return left.localeCompare(right);
+  });
+
+  const start = (page - 1) * limit;
+  return {
+    users: filtered.slice(start, start + limit),
+    total: filtered.length,
+    pages: Math.max(Math.ceil(filtered.length / limit), 1),
+  };
+};
+
 export default function AdminManageUsersScreen({ navigation }) {
-  const [tab, setTab] = useState("instructor");
-  const [colleges, setColleges] = useState([]);
-  const [courses, setCourses] = useState([]);
-  const [collegeId, setCollegeId] = useState("");
-  const [courseId, setCourseId] = useState("");
-  const [schoolYear, setSchoolYear] = useState("");
+  const [departments, setDepartments] = useState([]);
   const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState("");
+  const [role, setRole] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
+  const [status, setStatus] = useState("");
+  const [sort, setSort] = useState("createdAt");
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [summary, setSummary] = useState({
+    totalStudents: 0,
+    totalInstructors: 0,
+    activeUsers: 0,
+  });
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const [nameSearch, setNameSearch] = useState("");
   const [popup, setPopup] = useState({
     visible: false,
     title: "",
     message: "",
     type: "success",
   });
-  const listRef = useRef(null);
+
+  const departmentOptions = useMemo(
+    () => [{ label: "All Departments", value: "" }, ...departments],
+    [departments],
+  );
+
+  const loadUsers = useCallback(async (nextPage = 1) => {
+    setLoading(true);
+    try {
+      const limit = 12;
+      const res = await getAdminUsers({
+        q: search.trim(),
+        role,
+        status,
+        departmentId,
+        sort,
+        page: nextPage,
+        limit,
+      });
+      setUsers(res.data.users || []);
+      setTotal(res.data.total || 0);
+      setPage(res.data.page || nextPage);
+      setPages(res.data.pages || 1);
+      setSummary(
+        res.data.summary || {
+          totalStudents: 0,
+          totalInstructors: 0,
+          activeUsers: 0,
+        },
+      );
+    } catch (primaryErr) {
+      try {
+        const [studentsRes, instructorsRes] = await Promise.all([
+          getAdminStudents({}),
+          getAdminInstructors({}),
+        ]);
+        const allUsers = [
+          ...(studentsRes.data.students || []),
+          ...(instructorsRes.data.instructors || []),
+        ];
+        const limit = 12;
+        const result = filterAndPageUsers({
+          allUsers,
+          search,
+          role,
+          status,
+          departmentId,
+          sort,
+          page: nextPage,
+          limit,
+        });
+
+        setUsers(result.users);
+        setTotal(result.total);
+        setPage(nextPage);
+        setPages(result.pages);
+        setSummary(buildSummary(allUsers));
+      } catch (fallbackErr) {
+        const message =
+          fallbackErr.response?.data?.message ||
+          primaryErr.response?.data?.message ||
+          "Unable to load users. Please check your connection.";
+        setPopup({
+          visible: true,
+          title: "Search Failed",
+          message,
+          type: "error",
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [departmentId, role, search, sort, status]);
 
   useEffect(() => {
     getColleges()
-      .then((r) =>
-        setColleges(
-          r.data.colleges.map((c) => ({ label: c.name, value: c._id })),
+      .then((res) =>
+        setDepartments(
+          (res.data.colleges || []).map((item) => ({
+            label: item.name,
+            value: item._id,
+          })),
         ),
       )
-      .catch(() => {});
+      .catch(() => setDepartments([]));
   }, []);
 
   useEffect(() => {
-    setCollegeId("");
-    setCourseId("");
-    setUsers([]);
-    setSearched(false);
-  }, [tab]);
+    const timer = setTimeout(() => loadUsers(1), 350);
+    return () => clearTimeout(timer);
+  }, [loadUsers]);
 
-  useEffect(() => {
-    if (!collegeId) {
-      setCourses([]);
-      setCourseId("");
-      return;
-    }
-    getSections(collegeId)
-      .then((r) =>
-        setCourses(
-          r.data.sections.map((s) => ({ label: s.name, value: s._id })),
-        ),
-      )
-      .catch(() => setCourses([]));
-    setCourseId("");
-  }, [collegeId]);
+  useFocusEffect(
+    useCallback(() => {
+      loadUsers(1);
+    }, [loadUsers]),
+  );
 
-  const handleSearch = async () => {
-    Keyboard.dismiss();
-    if (!collegeId)
-      return setPopup({
-        visible: true,
-        title: "Missing",
-        message: "Please select a College.",
-        type: "error",
-      });
-    if (tab === "student" && !courseId)
-      return setPopup({
-        visible: true,
-        title: "Missing",
-        message: "Please select a Course.",
-        type: "error",
-      });
-
-    setLoading(true);
-    setUsers([]);
-    try {
-      let res;
-      if (tab === "instructor") {
-        res = await getAdminInstructors({ collegeId });
-        setUsers(res.data.instructors);
-        if (!res.data.instructors?.length)
-          setPopup({
-            visible: true,
-            title: "No Results",
-            message: "No instructors found for that college.",
-            type: "error",
-          });
-      } else {
-        res = await getAdminStudents({ collegeId, courseId, schoolYear });
-        setUsers(res.data.students);
-        if (!res.data.students?.length)
-          setPopup({
-            visible: true,
-            title: "No Results",
-            message: "No students found for those filters.",
-            type: "error",
-          });
-      }
-      setSearched(true);
-      setTimeout(
-        () => listRef.current?.scrollToOffset({ offset: 0, animated: true }),
-        100,
-      );
-    } catch {
-      setPopup({
-        visible: true,
-        title: "Error",
-        message: "Search failed. Please check your connection.",
-        type: "error",
-      });
-    }
-    setLoading(false);
+  const clearFilters = () => {
+    setSearch("");
+    setRole("");
+    setDepartmentId("");
+    setStatus("");
+    setSort("createdAt");
   };
 
   const handleDelete = (user) => {
@@ -147,13 +254,13 @@ export default function AdminManageUsersScreen({ navigation }) {
           onPress: async () => {
             try {
               const res = await deleteUser(user._id);
-              setUsers((prev) => prev.filter((u) => u._id !== user._id));
               setPopup({
                 visible: true,
                 title: "Deleted",
                 message: res.data.message,
                 type: "success",
               });
+              loadUsers(page);
             } catch {
               setPopup({
                 visible: true,
@@ -168,173 +275,6 @@ export default function AdminManageUsersScreen({ navigation }) {
     );
   };
 
-  const displayUsers = nameSearch.trim()
-    ? users.filter((u) => {
-        const q = nameSearch.trim().toLowerCase();
-        return (
-          u.fullName?.toLowerCase().includes(q) ||
-          u.username?.toLowerCase().includes(q) ||
-          u.studentId?.toLowerCase().includes(q) ||
-          u.instructorId?.toLowerCase().includes(q)
-        );
-      })
-    : users;
-
-  const FilterHeader = () => (
-    <View style={s.filterWrap}>
-      {/* Header */}
-      <View style={s.topBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={s.back}>
-          <Text style={s.backText}>←</Text>
-        </TouchableOpacity>
-        <View>
-          <Text style={s.title}>Manage Users</Text>
-          <Text style={s.subtitle}>Search, edit or delete accounts</Text>
-        </View>
-      </View>
-
-      {/* Tabs */}
-      <View style={s.tabRow}>
-        {["instructor", "student"].map((t) => (
-          <TouchableOpacity
-            key={t}
-            style={[s.tab, tab === t && s.tabActive]}
-            onPress={() => setTab(t)}
-          >
-            <Text style={[s.tabText, tab === t && s.tabTextActive]}>
-              {t === "instructor" ? "📚 Instructors" : "🎓 Students"}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Filters */}
-      <View style={s.filterCard}>
-        <Dropdown
-          label="College"
-          placeholder="Select College"
-          options={colleges}
-          value={collegeId}
-          onChange={setCollegeId}
-        />
-        {tab === "student" && (
-          <>
-            <Dropdown
-              label="Course"
-              placeholder={
-                !collegeId ? "Select a college first" : "Select Course"
-              }
-              options={courses}
-              value={courseId}
-              onChange={setCourseId}
-              disabled={!collegeId}
-            />
-            <Input
-              label="School Year"
-              placeholder="e.g. 2024-2025 (optional)"
-              value={schoolYear}
-              onChangeText={setSchoolYear}
-            />
-          </>
-        )}
-        <Button
-          title={loading ? "Searching..." : "Search"}
-          onPress={handleSearch}
-          loading={loading}
-        />
-      </View>
-
-      {searched && !loading && (
-        <View style={s.resultsHeader}>
-          <Text style={s.resultsCount}>
-            {displayUsers.length} of {users.length}{" "}
-            {tab === "instructor" ? "instructor" : "student"}
-            {users.length !== 1 ? "s" : ""}
-          </Text>
-        </View>
-      )}
-
-      {searched && !loading && users.length > 0 && (
-        <View style={s.searchBar}>
-          <SearchIcon size={15} color="#aaa" />
-          <TextInput
-            style={s.searchInput}
-            placeholder="Search by name, username or ID..."
-            placeholderTextColor="#aaa"
-            value={nameSearch}
-            onChangeText={setNameSearch}
-            returnKeyType="search"
-          />
-          {nameSearch.length > 0 && (
-            <TouchableOpacity onPress={() => setNameSearch("")}>
-              <Text style={s.searchClear}>✕</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-    </View>
-  );
-
-  const renderUser = ({ item: u, index }) => (
-    <View style={[s.userCard, index === 0 && { marginTop: 4 }]}>
-      {/* Avatar + name */}
-      <View style={s.userTop}>
-        <View style={s.avatar}>
-          <Text style={s.avatarText}>
-            {u.fullName?.charAt(0)?.toUpperCase()}
-          </Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={s.userName}>{u.fullName}</Text>
-          <Text style={s.userRole}>
-            {u.role === "student" ? "🎓 Student" : "📚 Instructor"}
-          </Text>
-        </View>
-        {u.status === "pending" && (
-          <View style={s.pendingChip}>
-            <Text style={s.pendingChipText}>Pending</Text>
-          </View>
-        )}
-      </View>
-
-      {/* Details */}
-      <View style={s.detailsBox}>
-        <DetailRow icon="👤" label="Username" value={u.username} />
-        {u.role === "student" && (
-          <>
-            <DetailRow icon="🎓" label="Student ID" value={u.studentId} />
-            <DetailRow icon="📋" label="Course" value={u.courseId?.name} />
-            <DetailRow icon="🏷" label="Section" value={u.section} />
-          </>
-        )}
-        {u.role === "instructor" && (
-          <DetailRow icon="🪪" label="Instructor ID" value={u.instructorId} />
-        )}
-        <DetailRow icon="🏫" label="College" value={u.collegeId?.name} />
-        <DetailRow icon="📅" label="School Year" value={u.schoolYear} />
-      </View>
-
-      {/* Actions */}
-      <View style={s.actions}>
-        <TouchableOpacity
-          style={s.editBtn}
-          onPress={() => navigation.navigate("AdminEditUser", { user: u })}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <EditIcon size={16} color="#1736F5" />
-            <Text style={s.editTxt}>Edit</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={s.deleteBtn} onPress={() => handleDelete(u)}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-            <DeleteIcon size={16} color="#E53935" />
-            <Text style={s.deleteTxt}>Delete</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
   return (
     <LinearGradient
       colors={["#4DD9C0", "#4D8FD9", "#D98F7A"]}
@@ -342,39 +282,138 @@ export default function AdminManageUsersScreen({ navigation }) {
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
     >
-      <FlatList
-        ref={listRef}
-        data={loading ? [] : displayUsers}
-        keyExtractor={(u) => u._id}
-        renderItem={renderUser}
-        ListHeaderComponent={<FilterHeader />}
-        ListEmptyComponent={
-          !loading && searched ? (
-            <View style={s.empty}>
-              <Text style={s.emptyIcon}>{nameSearch ? "🔍" : "📭"}</Text>
-              <Text style={s.emptyText}>
-                {nameSearch
-                  ? 'No match for "' + nameSearch + '"'
-                  : "No users found"}
-              </Text>
-            </View>
-          ) : null
-        }
-        ListFooterComponent={
-          loading ? (
-            <ActivityIndicator
-              color="#fff"
-              size="large"
-              style={{ marginTop: 20 }}
-            />
-          ) : (
-            <View style={{ height: 40 }} />
-          )
-        }
-        contentContainerStyle={s.listContent}
+      <ScrollView
+        contentContainerStyle={s.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-      />
+      >
+        <View style={s.topBar}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={s.back}>
+            <Text style={s.backText}>{"<"}</Text>
+          </TouchableOpacity>
+          <View style={s.titleWrap}>
+            <Text style={s.title}>Manage Users</Text>
+            <Text style={s.subtitle}>Search and maintain account records</Text>
+          </View>
+        </View>
+
+        <View style={s.summaryRow}>
+          <SummaryCard label="Students" value={summary.totalStudents} />
+          <SummaryCard label="Instructors" value={summary.totalInstructors} />
+          <SummaryCard label="Active Users" value={summary.activeUsers} />
+        </View>
+
+        <View style={s.panel}>
+          <View style={s.searchBar}>
+            <SearchIcon size={18} color="#6B7280" />
+            <TextInput
+              style={s.searchInput}
+              placeholder="Search username, name, email, or ID"
+              placeholderTextColor="#8E99AA"
+              value={search}
+              onChangeText={setSearch}
+              returnKeyType="search"
+            />
+            {search ? (
+              <TouchableOpacity onPress={() => setSearch("")}>
+                <Text style={s.clearText}>Clear</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+
+          <View style={s.filterGrid}>
+            <View style={s.filterItem}>
+              <Dropdown
+                label="Role"
+                placeholder="All Roles"
+                options={roleOptions}
+                value={role}
+                onChange={setRole}
+              />
+            </View>
+            <View style={s.filterItem}>
+              <Dropdown
+                label="Department"
+                placeholder="All Departments"
+                options={departmentOptions}
+                value={departmentId}
+                onChange={setDepartmentId}
+              />
+            </View>
+            <View style={s.filterItem}>
+              <Dropdown
+                label="Status"
+                placeholder="All Statuses"
+                options={statusOptions}
+                value={status}
+                onChange={setStatus}
+              />
+            </View>
+            <View style={s.filterItem}>
+              <Dropdown
+                label="Sort"
+                placeholder="Sort"
+                options={sortOptions}
+                value={sort}
+                onChange={setSort}
+              />
+            </View>
+          </View>
+
+          <View style={s.tableTop}>
+            <Text style={s.resultCount}>
+              {loading ? "Loading users..." : `${total} account records`}
+            </Text>
+            <TouchableOpacity onPress={clearFilters} style={s.clearButton}>
+              <Text style={s.clearButtonText}>Reset</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={s.table}>
+            <TableHeader />
+            {loading ? (
+              <ActivityIndicator color={COLORS.blue} style={s.loader} />
+            ) : users.length ? (
+              users.map((user) => (
+                <UserRow
+                  key={user._id}
+                  user={user}
+                  onEdit={() =>
+                    navigation.navigate("AdminEditUser", { user })
+                  }
+                  onDelete={() => handleDelete(user)}
+                />
+              ))
+            ) : (
+              <View style={s.emptyRow}>
+                <Text style={s.emptyText}>No users match your search.</Text>
+              </View>
+            )}
+          </View>
+        </ScrollView>
+
+        <View style={s.pagination}>
+          <TouchableOpacity
+            style={[s.pageBtn, page <= 1 && s.pageBtnDisabled]}
+            disabled={page <= 1 || loading}
+            onPress={() => loadUsers(page - 1)}
+          >
+            <Text style={s.pageBtnText}>Previous</Text>
+          </TouchableOpacity>
+          <Text style={s.pageText}>
+            Page {page} of {pages}
+          </Text>
+          <TouchableOpacity
+            style={[s.pageBtn, page >= pages && s.pageBtnDisabled]}
+            disabled={page >= pages || loading}
+            onPress={() => loadUsers(page + 1)}
+          >
+            <Text style={s.pageBtnText}>Next</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
 
       <PopupModal
         visible={popup.visible}
@@ -387,126 +426,215 @@ export default function AdminManageUsersScreen({ navigation }) {
   );
 }
 
-const DetailRow = ({ icon, label, value }) =>
-  value ? (
-    <View style={s.detailRow}>
-      <Text style={s.detailIcon}>{icon}</Text>
-      <Text style={s.detailLabel}>{label}</Text>
-      <Text style={s.detailValue}>{value}</Text>
+const SummaryCard = ({ label, value }) => (
+  <View style={s.summaryCard}>
+    <Text style={s.summaryValue}>{value}</Text>
+    <Text style={s.summaryLabel}>{label}</Text>
+  </View>
+);
+
+const TableHeader = () => (
+  <View style={[s.tableRow, s.headerRow]}>
+    <Cell text="User ID" header width={130} />
+    <Cell text="Full Name" header width={180} />
+    <Cell text="Role" header width={100} />
+    <Cell text="Department" header width={170} />
+    <Cell text="Email Address" header width={220} />
+    <Cell text="Status" header width={110} />
+    <Cell text="Date Created" header width={130} />
+    <Cell text="Actions" header width={120} />
+  </View>
+);
+
+const UserRow = ({ user, onEdit, onDelete }) => (
+  <View style={s.tableRow}>
+    <Cell text={getUserId(user)} width={130} />
+    <Cell text={user.fullName || "-"} width={180} strong />
+    <Cell text={user.role || "-"} width={100} />
+    <Cell text={user.collegeId?.name || "Unassigned"} width={170} />
+    <Cell text={user.email || "-"} width={220} />
+    <View style={[s.cell, { width: 110 }]}>
+      <View style={[s.statusChip, s[`status_${user.status}`]]}>
+        <Text style={s.statusText}>{user.status || "active"}</Text>
+      </View>
     </View>
-  ) : null;
+    <Cell text={formatDate(user.createdAt)} width={130} />
+    <View style={[s.cell, s.actionCell, { width: 120 }]}>
+      <TouchableOpacity style={s.iconBtn} onPress={onEdit}>
+        <EditIcon size={16} color={COLORS.blue} />
+      </TouchableOpacity>
+      <TouchableOpacity style={s.iconBtnDanger} onPress={onDelete}>
+        <DeleteIcon size={16} color={COLORS.danger} />
+      </TouchableOpacity>
+    </View>
+  </View>
+);
+
+const Cell = ({ text, width, header, strong }) => (
+  <View style={[s.cell, { width }]}>
+    <Text
+      style={[s.cellText, header && s.headerText, strong && s.strongText]}
+      numberOfLines={2}
+    >
+      {text}
+    </Text>
+  </View>
+);
 
 const s = StyleSheet.create({
   container: { flex: 1 },
-  listContent: { paddingBottom: 40 },
-  filterWrap: { paddingHorizontal: 20, paddingTop: 56 },
+  content: { padding: 20, paddingTop: 56, paddingBottom: 40 },
   topBar: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    marginBottom: 20,
+    marginBottom: 18,
   },
-  back: { padding: 4 },
-  backText: { fontSize: 22, fontWeight: "700", color: "#1a3a5c" },
-  title: { fontSize: 22, fontWeight: "900", color: "#1a3a5c" },
-  subtitle: { fontSize: 12, color: "rgba(26,58,92,0.7)", marginTop: 2 },
-  tabRow: { flexDirection: "row", gap: 10, marginBottom: 14 },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.35)",
+  back: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(255,255,255,0.75)",
     alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
   },
-  tabActive: { backgroundColor: "#1a3f7a" },
-  tabText: { fontWeight: "700", color: "rgba(26,58,92,0.7)", fontSize: 13 },
-  tabTextActive: { color: "#fff" },
-  filterCard: {
-    backgroundColor: "rgba(255,255,255,0.92)",
-    borderRadius: 18,
-    padding: 18,
-    elevation: 3,
-    marginBottom: 16,
+  backText: { color: "#1A3A5C", fontSize: 20, fontWeight: "900" },
+  titleWrap: { flex: 1 },
+  title: { fontSize: 23, fontWeight: "900", color: "#163B5C" },
+  subtitle: { marginTop: 2, fontSize: 12, color: "rgba(22,59,92,0.72)" },
+  summaryRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 14,
   },
-  resultsHeader: { marginBottom: 8 },
-  resultsCount: { fontSize: 13, fontWeight: "700", color: "#1a3a5c" },
-
-  // User card
-  userCard: {
+  summaryCard: {
+    flex: 1,
+    minHeight: 74,
+    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.86)",
+    padding: 10,
+    justifyContent: "center",
+  },
+  summaryValue: { fontSize: 22, fontWeight: "900", color: COLORS.blue },
+  summaryLabel: { marginTop: 3, fontSize: 11, fontWeight: "700", color: "#4B5563" },
+  panel: {
+    borderRadius: 8,
     backgroundColor: "rgba(255,255,255,0.92)",
-    borderRadius: 18,
-    padding: 16,
-    marginHorizontal: 20,
+    padding: 14,
     marginBottom: 12,
-    elevation: 3,
   },
-  userTop: {
+  searchBar: {
+    minHeight: 48,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#E5EAF5",
+    backgroundColor: "#F8FAFF",
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginBottom: 12,
+    paddingHorizontal: 12,
+    gap: 8,
+    marginBottom: 10,
   },
-  avatar: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: "#1a3f7a",
+  searchInput: { flex: 1, fontSize: 14, color: "#172036" },
+  clearText: { color: COLORS.blue, fontSize: 12, fontWeight: "800" },
+  filterGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  filterItem: { minWidth: 150, flex: 1 },
+  tableTop: {
+    marginTop: 6,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  resultCount: { color: "#334155", fontSize: 13, fontWeight: "800" },
+  clearButton: {
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#D7DEEA",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  clearButtonText: { color: "#334155", fontSize: 12, fontWeight: "800" },
+  table: {
+    minWidth: 1160,
+    borderRadius: 8,
+    overflow: "hidden",
+    backgroundColor: "rgba(255,255,255,0.96)",
+  },
+  tableRow: {
+    minHeight: 58,
+    flexDirection: "row",
+    alignItems: "stretch",
+    borderBottomWidth: 1,
+    borderBottomColor: "#EDF1F7",
+  },
+  headerRow: { minHeight: 46, backgroundColor: "#EAF0FF" },
+  cell: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    justifyContent: "center",
+    borderRightWidth: 1,
+    borderRightColor: "#EDF1F7",
+  },
+  cellText: { color: "#334155", fontSize: 12, lineHeight: 16 },
+  headerText: { color: "#17365D", fontSize: 12, fontWeight: "900" },
+  strongText: { color: "#172036", fontWeight: "900" },
+  statusChip: {
+    alignSelf: "flex-start",
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    backgroundColor: "#E8F5EE",
+  },
+  status_active: { backgroundColor: "#E5F8EF" },
+  status_pending: { backgroundColor: "#FFF4D8" },
+  status_inactive: { backgroundColor: "#EEF2F7" },
+  status_suspended: { backgroundColor: "#FFE6E6" },
+  statusText: {
+    color: "#1F2937",
+    fontSize: 11,
+    fontWeight: "900",
+    textTransform: "capitalize",
+  },
+  actionCell: { flexDirection: "row", alignItems: "center", gap: 8 },
+  iconBtn: {
+    width: 36,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: "#EEF2FF",
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: { color: "#fff", fontSize: 20, fontWeight: "900" },
-  userName: { fontSize: 16, fontWeight: "800", color: "#1a3a5c" },
-  userRole: { fontSize: 12, color: "#666", marginTop: 2 },
-  pendingChip: {
-    backgroundColor: "#FFF3CD",
+  iconBtnDanger: {
+    width: 36,
+    height: 34,
     borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  pendingChipText: { fontSize: 10, fontWeight: "800", color: "#E07B00" },
-  detailsBox: {
-    backgroundColor: "#F4F6FF",
-    borderRadius: 12,
-    padding: 12,
-    gap: 6,
-    marginBottom: 14,
-  },
-  detailRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  detailIcon: { fontSize: 13, width: 20 },
-  detailLabel: { fontSize: 12, color: "#888", width: 90 },
-  detailValue: { fontSize: 12, fontWeight: "700", color: "#1a3a5c", flex: 1 },
-  actions: { flexDirection: "row", gap: 10 },
-  editBtn: {
-    flex: 1,
-    backgroundColor: "#EEF0FF",
-    borderRadius: 12,
-    paddingVertical: 12,
+    backgroundColor: "#FFECEC",
     alignItems: "center",
+    justifyContent: "center",
   },
-  editTxt: { color: COLORS.blue, fontWeight: "800", fontSize: 13 },
-  deleteBtn: {
-    flex: 1,
-    backgroundColor: "#FFE5E5",
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  deleteTxt: { color: "#E53935", fontWeight: "800", fontSize: 13 },
-  empty: { alignItems: "center", paddingTop: 40 },
-  emptyIcon: { fontSize: 44, marginBottom: 10 },
-  emptyText: { color: "#1a3a5c", fontSize: 15, fontWeight: "700" },
-  searchBar: {
+  loader: { paddingVertical: 40 },
+  emptyRow: { paddingVertical: 34, alignItems: "center" },
+  emptyText: { color: "#334155", fontSize: 14, fontWeight: "800" },
+  pagination: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.92)",
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    height: 48,
-    gap: 8,
-    marginBottom: 12,
-    elevation: 2,
+    justifyContent: "space-between",
+    marginTop: 12,
+    gap: 10,
   },
-  searchIcon: { fontSize: 15 },
-  searchInput: { flex: 1, fontSize: 14, color: "#1a3a5c" },
-  searchClear: { fontSize: 13, color: "#aaa", padding: 4 },
+  pageBtn: {
+    borderRadius: 8,
+    backgroundColor: COLORS.blue,
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    minWidth: 96,
+    alignItems: "center",
+  },
+  pageBtnDisabled: { opacity: 0.45 },
+  pageBtnText: { color: "#fff", fontWeight: "900", fontSize: 12 },
+  pageText: { color: "#163B5C", fontSize: 13, fontWeight: "900" },
 });

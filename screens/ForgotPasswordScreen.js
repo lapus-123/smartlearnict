@@ -83,8 +83,8 @@ export default function ForgotPasswordScreen({ navigation }) {
         </View>
         <Text style={styles.title}>Forgot Password?</Text>
         <Text style={styles.sub}>
-          Enter your registered email address and we'll send your login
-          credentials to your inbox.
+          Enter your registered email address and we will send your account
+          recovery details to your inbox.
         </Text>
 
         {/* Form */}
@@ -99,7 +99,7 @@ export default function ForgotPasswordScreen({ navigation }) {
             autoCorrect={false}
           />
           <Button
-            title={loading ? "Sending..." : "Send My Credentials"}
+            title={loading ? "Sending..." : "Send Recovery Email"}
             onPress={handleSubmit}
             loading={loading}
           />

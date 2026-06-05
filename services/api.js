@@ -41,6 +41,7 @@ export const getAdminInstructors = (params) =>
   api.get("/admin/instructors", { params });
 export const getAdminStudents = (params) =>
   api.get("/admin/students", { params });
+export const getAdminUsers = (params) => api.get("/admin/users", { params });
 export const editUser = (id, data) => api.put(`/admin/users/${id}`, data);
 export const deleteUser = (id) => api.delete(`/admin/users/${id}`);
 

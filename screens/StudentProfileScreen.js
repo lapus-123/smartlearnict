@@ -24,7 +24,7 @@ export default function StudentProfileScreen({ navigation }) {
   const rows = [
     { label: "Full Name", value: currentUser?.fullName },
     { label: "Username", value: currentUser?.username },
-    { label: "College", value: currentUser?.college?.name },
+    { label: "Department", value: currentUser?.college?.name },
     { label: "Course", value: currentUser?.course?.name },
     { label: "Section", value: currentUser?.section },
     { label: "School Year", value: currentUser?.schoolYear },

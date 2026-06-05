@@ -25,7 +25,7 @@ export default function InstructorProfileScreen({ navigation }) {
     { label: "Full Name", value: currentUser?.fullName },
     { label: "Username", value: currentUser?.username },
     { label: "Email", value: currentUser?.email },
-    { label: "College", value: currentUser?.college?.name },
+    { label: "Department", value: currentUser?.college?.name },
     { label: "School Year", value: currentUser?.schoolYear },
     { label: "Instructor ID", value: currentUser?.instructorId },
   ];

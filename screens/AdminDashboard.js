@@ -249,16 +249,16 @@ export default function AdminDashboard({ navigation }) {
         <View style={s.grid}>
           <ActionCard
             icon={<CollegeIcon />}
-            label="Manage Colleges"
+            label="Manage Departments"
             color="#1a3f7a"
-            sub="Add & rename colleges"
+            sub="Add & rename departments"
             onPress={() => navigation.navigate("CollegeManager")}
           />
           <ActionCard
             icon={<CoursesAdminIcon />}
-            label="Manage Courses"
+            label="Course & Curriculum"
             color="#5B2FBE"
-            sub="Add & rename courses"
+            sub="Programs and department mapping"
             onPress={() => navigation.navigate("SectionManager")}
           />
         </View>

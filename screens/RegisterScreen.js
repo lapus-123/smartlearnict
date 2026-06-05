@@ -111,7 +111,7 @@ export default function RegisterScreen({ navigation }) {
       return err("Invalid Email", "Please enter a valid email address.");
     if (!birthdayStr)
       return err("Missing Fields", "Please select your birthday.");
-    if (!cId) return err("Missing Fields", "Please select your College.");
+    if (!cId) return err("Missing Fields", "Please select your Department.");
     if (!schoolYear)
       return err("Missing Fields", "Please select your School Year.");
     if (role === "student") {
@@ -244,7 +244,7 @@ export default function RegisterScreen({ navigation }) {
                   23)
                 </Text>
 
-                <Text style={s.label}>COLLEGE</Text>
+                <Text style={s.label}>DEPARTMENT</Text>
                 <Dropdown
                   value={collegeId}
                   onChange={(val) => {
@@ -253,7 +253,9 @@ export default function RegisterScreen({ navigation }) {
                   }}
                   options={colleges}
                   placeholder={
-                    loadingColleges ? "Loading colleges..." : "Select College"
+                    loadingColleges
+                      ? "Loading departments..."
+                      : "Select Department"
                   }
                 />
 
@@ -277,7 +279,7 @@ export default function RegisterScreen({ navigation }) {
                       options={courses}
                       placeholder={
                         !collegeId
-                          ? "Select a college first"
+                          ? "Select a department first"
                           : loadingCourses
                             ? "Loading courses..."
                             : "Select Course"

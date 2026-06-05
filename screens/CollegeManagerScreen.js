@@ -24,16 +24,16 @@ function TabBar({ active, onChange }) {
   return (
     <View style={s.tabBar}>
       {[
-        { key: "add", label: "➕  Add College" },
-        { key: "list", label: "📋  College List" },
-      ].map((t) => (
+        { key: "add", label: "Add Department" },
+        { key: "list", label: "Department List" },
+      ].map((tab) => (
         <TouchableOpacity
-          key={t.key}
-          style={[s.tab, active === t.key && s.tabActive]}
-          onPress={() => onChange(t.key)}
+          key={tab.key}
+          style={[s.tab, active === tab.key && s.tabActive]}
+          onPress={() => onChange(tab.key)}
         >
-          <Text style={[s.tabText, active === t.key && s.tabTextActive]}>
-            {t.label}
+          <Text style={[s.tabText, active === tab.key && s.tabTextActive]}>
+            {tab.label}
           </Text>
         </TouchableOpacity>
       ))}
@@ -43,7 +43,7 @@ function TabBar({ active, onChange }) {
 
 export default function CollegeManagerScreen({ navigation }) {
   const [tab, setTab] = useState("add");
-  const [colleges, setColleges] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
@@ -61,51 +61,62 @@ export default function CollegeManagerScreen({ navigation }) {
     load();
   }, []);
 
+  const show = (title, message, type) =>
+    setPopup({ visible: true, title, message, type });
+
   const load = async () => {
     setFetching(true);
     try {
-      const r = await getColleges();
-      setColleges(r.data.colleges);
+      const res = await getColleges();
+      setDepartments(res.data.colleges || []);
     } catch {
-      setColleges([]);
+      setDepartments([]);
+    } finally {
+      setFetching(false);
     }
-    setFetching(false);
   };
 
   const handleCreate = async () => {
-    if (!name.trim()) return show("Missing", "Enter a college name.", "error");
+    const cleanName = name.trim();
+    if (!cleanName) {
+      return show("Missing", "Enter a department name.", "error");
+    }
+
     setLoading(true);
     try {
-      await createCollege({ name });
+      await createCollege({ name: cleanName });
       setName("");
-      load();
-      show("Created", `"${name}" added successfully.`, "success");
+      await load();
+      show("Created", `"${cleanName}" added successfully.`, "success");
       setTab("list");
     } catch (err) {
       show("Error", err.response?.data?.message || "Failed.", "error");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleSave = async (id) => {
-    if (!editName.trim())
-      return show("Missing", "Name cannot be empty.", "error");
+    const cleanName = editName.trim();
+    if (!cleanName) return show("Missing", "Name cannot be empty.", "error");
+
     setSavingId(id);
     try {
-      await updateCollege(id, { name: editName.trim() });
+      await updateCollege(id, { name: cleanName });
       setEditingId(null);
-      load();
-      show("Updated", "College renamed.", "success");
+      await load();
+      show("Updated", "Department renamed.", "success");
     } catch (err) {
       show("Error", err.response?.data?.message || "Failed.", "error");
+    } finally {
+      setSavingId(null);
     }
-    setSavingId(null);
   };
 
-  const handleDelete = (college) => {
+  const handleDelete = (department) => {
     Alert.alert(
-      "Delete College",
-      `Delete "${college.name}"?\n\nThis will also delete all its courses.`,
+      "Delete Department",
+      `Delete "${department.name}"?\n\nThis will also delete all linked courses.`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -113,9 +124,9 @@ export default function CollegeManagerScreen({ navigation }) {
           style: "destructive",
           onPress: async () => {
             try {
-              await deleteCollege(college._id);
-              load();
-              show("Deleted", `"${college.name}" deleted.`, "success");
+              await deleteCollege(department._id);
+              await load();
+              show("Deleted", `"${department.name}" deleted.`, "success");
             } catch (err) {
               show(
                 "Error",
@@ -129,16 +140,13 @@ export default function CollegeManagerScreen({ navigation }) {
     );
   };
 
-  const show = (title, message, type) =>
-    setPopup({ visible: true, title, message, type });
-
   return (
     <View style={s.container}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.back}>
-          <Text style={s.backText}>←</Text>
+          <Text style={s.backText}>{"<"}</Text>
         </TouchableOpacity>
-        <Text style={s.title}>Manage Colleges</Text>
+        <Text style={s.title}>Manage Departments</Text>
       </View>
 
       <TabBar active={tab} onChange={setTab} />
@@ -149,15 +157,15 @@ export default function CollegeManagerScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
         >
           <View style={s.card}>
-            <Text style={s.cardTitle}>New College</Text>
+            <Text style={s.cardTitle}>New Department</Text>
             <Input
-              label="College Name"
-              placeholder="e.g. College of Computing Informatics"
+              label="Department Name"
+              placeholder="e.g. Information Technology Department"
               value={name}
               onChangeText={setName}
             />
             <Button
-              title="Add College"
+              title="Add Department"
               onPress={handleCreate}
               loading={loading}
             />
@@ -167,12 +175,12 @@ export default function CollegeManagerScreen({ navigation }) {
         <ScrollView contentContainerStyle={s.body}>
           {fetching ? (
             <ActivityIndicator color={COLORS.blue} style={{ marginTop: 20 }} />
-          ) : colleges.length === 0 ? (
-            <Text style={s.empty}>No colleges yet.</Text>
+          ) : departments.length === 0 ? (
+            <Text style={s.empty}>No departments yet.</Text>
           ) : (
-            colleges.map((c) => (
-              <View key={c._id} style={s.row}>
-                {editingId === c._id ? (
+            departments.map((department) => (
+              <View key={department._id} style={s.row}>
+                {editingId === department._id ? (
                   <View style={s.editRow}>
                     <TextInput
                       style={s.editInput}
@@ -183,36 +191,36 @@ export default function CollegeManagerScreen({ navigation }) {
                     />
                     <TouchableOpacity
                       style={s.saveBtn}
-                      onPress={() => handleSave(c._id)}
-                      disabled={savingId === c._id}
+                      onPress={() => handleSave(department._id)}
+                      disabled={savingId === department._id}
                     >
                       <Text style={s.saveBtnText}>
-                        {savingId === c._id ? "..." : "✓"}
+                        {savingId === department._id ? "..." : "Save"}
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={s.cancelBtn}
                       onPress={() => setEditingId(null)}
                     >
-                      <Text style={s.cancelBtnText}>✕</Text>
+                      <Text style={s.cancelBtnText}>Cancel</Text>
                     </TouchableOpacity>
                   </View>
                 ) : (
                   <View style={s.viewRow}>
-                    <Text style={s.rowText}>{c.name}</Text>
-                    <View style={{ flexDirection: "row", gap: 8 }}>
+                    <Text style={s.rowText}>{department.name}</Text>
+                    <View style={s.rowActions}>
                       <TouchableOpacity
                         style={s.editBtn}
                         onPress={() => {
-                          setEditingId(c._id);
-                          setEditName(c.name);
+                          setEditingId(department._id);
+                          setEditName(department.name);
                         }}
                       >
-                        <Text style={s.editBtnText}>Rename</Text>
+                        <Text style={s.editBtnText}>Edit</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={s.deleteBtn}
-                        onPress={() => handleDelete(c)}
+                        onPress={() => handleDelete(department)}
                       >
                         <Text style={s.deleteBtnText}>Delete</Text>
                       </TouchableOpacity>
@@ -247,8 +255,14 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 12,
   },
-  back: { padding: 4 },
-  backText: { color: "#fff", fontSize: 22, fontWeight: "700" },
+  back: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  backText: { color: "#fff", fontSize: 22, fontWeight: "900" },
   title: { color: "#fff", fontSize: 18, fontWeight: "800" },
   tabBar: {
     flexDirection: "row",
@@ -258,12 +272,12 @@ const s = StyleSheet.create({
   },
   tab: { flex: 1, paddingVertical: 14, alignItems: "center" },
   tabActive: { borderBottomWidth: 3, borderBottomColor: COLORS.blue },
-  tabText: { fontSize: 13, fontWeight: "600", color: "#aaa" },
+  tabText: { fontSize: 13, fontWeight: "600", color: "#8E99AA" },
   tabTextActive: { color: COLORS.blue, fontWeight: "800" },
   body: { padding: 20, paddingBottom: 40 },
   card: {
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 8,
     padding: 18,
     elevation: 2,
     marginBottom: 14,
@@ -274,11 +288,9 @@ const s = StyleSheet.create({
     color: "#1a3a5c",
     marginBottom: 14,
   },
-  notice: { backgroundColor: "#EEF0FF", borderRadius: 10, padding: 12 },
-  noticeText: { fontSize: 12, color: COLORS.blue, lineHeight: 18 },
   row: {
     backgroundColor: "#fff",
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 14,
     marginBottom: 10,
     elevation: 1,
@@ -287,22 +299,24 @@ const s = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: 10,
   },
-  rowText: { fontSize: 14, fontWeight: "600", color: "#1a3a5c", flex: 1 },
+  rowText: { fontSize: 14, fontWeight: "700", color: "#1a3a5c", flex: 1 },
+  rowActions: { flexDirection: "row", gap: 8 },
   editBtn: {
     backgroundColor: "#EEF0FF",
     borderRadius: 8,
     paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
-  editBtnText: { color: COLORS.blue, fontWeight: "700", fontSize: 13 },
+  editBtnText: { color: COLORS.blue, fontWeight: "800", fontSize: 13 },
   deleteBtn: {
     backgroundColor: "#FFE5E5",
     borderRadius: 8,
     paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
-  deleteBtnText: { color: "#E53935", fontWeight: "700", fontSize: 13 },
+  deleteBtnText: { color: "#E53935", fontWeight: "800", fontSize: 13 },
   editRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   editInput: {
     flex: 1,
@@ -318,16 +332,16 @@ const s = StyleSheet.create({
   saveBtn: {
     backgroundColor: COLORS.blue,
     borderRadius: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 8,
   },
-  saveBtnText: { color: "#fff", fontWeight: "700", fontSize: 13 },
+  saveBtnText: { color: "#fff", fontWeight: "800", fontSize: 13 },
   cancelBtn: {
     backgroundColor: "#F0F0F0",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  cancelBtnText: { color: "#888", fontWeight: "700", fontSize: 13 },
-  empty: { color: "#aaa", textAlign: "center", marginTop: 40, fontSize: 14 },
+  cancelBtnText: { color: "#6B7280", fontWeight: "800", fontSize: 13 },
+  empty: { color: "#8E99AA", textAlign: "center", marginTop: 40, fontSize: 14 },
 });

@@ -39,6 +39,7 @@ export default function AdminEditUserScreen({ route, navigation }) {
   const [courseId, setCourseId] = useState(
     user.courseId?._id || user.courseId || "",
   );
+  const [status, setStatus] = useState(user.status || "active");
   const collegeIdRef = useRef(user.collegeId?._id || user.collegeId || "");
   const courseIdRef = useRef(user.courseId?._id || user.courseId || "");
 
@@ -115,6 +116,7 @@ export default function AdminEditUserScreen({ route, navigation }) {
       birthday: birthdayStr || user.birthday,
       schoolYear: schoolYear.trim(),
       collegeId: collegeIdRef.current,
+      status,
     };
 
     if (user.role === "student") {
@@ -216,11 +218,24 @@ export default function AdminEditUserScreen({ route, navigation }) {
         />
 
         <Dropdown
-          label="College"
-          placeholder="Select College"
+          label="Department"
+          placeholder="Select Department"
           options={colleges}
           value={collegeId}
           onChange={handleCollegeChange}
+        />
+
+        <Dropdown
+          label="Account Status"
+          placeholder="Select Status"
+          options={[
+            { label: "Active", value: "active" },
+            { label: "Pending", value: "pending" },
+            { label: "Inactive", value: "inactive" },
+            { label: "Suspended", value: "suspended" },
+          ]}
+          value={status}
+          onChange={setStatus}
         />
 
         {/* Student-only fields */}
@@ -236,7 +251,7 @@ export default function AdminEditUserScreen({ route, navigation }) {
             <Dropdown
               label="Course"
               placeholder={
-                !collegeId ? "Select college first" : "Select Course"
+                !collegeId ? "Select department first" : "Select Course"
               }
               options={courses}
               value={courseId}
