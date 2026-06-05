@@ -23,8 +23,8 @@ function TabBar({ active, onChange }) {
   return (
     <View style={s.tabBar}>
       {[
-        { key: "add", label: "Add Program" },
-        { key: "list", label: "Curriculum List" },
+        { key: "add", label: "Add Section" },
+        { key: "list", label: "Section List" },
       ].map((tab) => (
         <TouchableOpacity
           key={tab.key}
@@ -96,7 +96,7 @@ export default function SectionManagerScreen({ navigation }) {
     if (!cleanName || !selectedDepartmentId) {
       return show(
         "Missing",
-        "Select a department and enter a program name.",
+        "Select a department and enter a section name.",
         "error",
       );
     }
@@ -139,7 +139,7 @@ export default function SectionManagerScreen({ navigation }) {
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.back}>
           <Text style={s.backText}>{"<"}</Text>
         </TouchableOpacity>
-        <Text style={s.title}>Course and Curriculum Management</Text>
+        <Text style={s.title}>Manage Section</Text>
       </View>
 
       <TabBar active={tab} onChange={setTab} />
@@ -150,9 +150,9 @@ export default function SectionManagerScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
         >
           <View style={s.card}>
-            <Text style={s.cardTitle}>New Academic Program</Text>
+            <Text style={s.cardTitle}>New Section</Text>
             <Text style={s.cardSub}>
-              Assign programs or curricula to the correct department.
+              Assign sections to the correct department.
             </Text>
             <Dropdown
               label="Department"
@@ -162,14 +162,14 @@ export default function SectionManagerScreen({ navigation }) {
               onChange={setSelectedDepartmentId}
             />
             <Input
-              label="Program or Curriculum Name"
-              placeholder="e.g. BSIT"
+              label="Section Name"
+              placeholder="e.g. BSIT 1A"
               value={name}
               onChangeText={setName}
               autoCapitalize="characters"
             />
             <Button
-              title="Add Program"
+              title="Add Section"
               onPress={handleCreate}
               loading={loading}
             />
@@ -192,10 +192,10 @@ export default function SectionManagerScreen({ navigation }) {
           ) : (
             <ScrollView contentContainerStyle={s.body}>
               <Text style={s.countLabel}>
-                {filtered.length} program{filtered.length !== 1 ? "s" : ""}
+                {filtered.length} section{filtered.length !== 1 ? "s" : ""}
               </Text>
               {filtered.length === 0 ? (
-                <Text style={s.empty}>No programs found.</Text>
+                <Text style={s.empty}>No sections found.</Text>
               ) : (
                 filtered.map((program) => (
                   <View key={program._id} style={s.row}>

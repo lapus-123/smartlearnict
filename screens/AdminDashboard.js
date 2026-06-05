@@ -256,9 +256,9 @@ export default function AdminDashboard({ navigation }) {
           />
           <ActionCard
             icon={<CoursesAdminIcon />}
-            label="Course & Curriculum"
+            label="Manage Section"
             color="#5B2FBE"
-            sub="Programs and department mapping"
+            sub="Add and manage sections"
             onPress={() => navigation.navigate("SectionManager")}
           />
         </View>
